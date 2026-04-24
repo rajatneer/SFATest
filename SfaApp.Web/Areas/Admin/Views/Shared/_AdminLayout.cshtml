@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Admin Setup</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+@{
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty;
+
+    string GetAdminNavClass(string controllerName)
+    {
+        return string.Equals(currentController, controllerName, StringComparison.OrdinalIgnoreCase)
+            ? "sfa-nav-link is-active"
+            : "sfa-nav-link";
+    }
+}
+<body>
+    <div class="sfa-admin-shell">
+        <aside class="sfa-admin-sidebar">
+            <a class="sfa-brand" asp-area="Admin" asp-controller="Home" asp-action="Index">SFA Admin Console</a>
+            <p class="sfa-brand-tagline">Field operations control and monitoring</p>
+            <nav class="sfa-admin-nav">
+                <a class="@GetAdminNavClass("Home")" asp-area="Admin" asp-controller="Home" asp-action="Index">Dashboard</a>
+                <a class="@GetAdminNavClass("Masters")" asp-area="Admin" asp-controller="Masters" asp-action="Index">Master Management</a>
+                <a class="@GetAdminNavClass("Users")" asp-area="Admin" asp-controller="Users" asp-action="Index">User Management</a>
+                <a class="@GetAdminNavClass("Roles")" asp-area="Admin" asp-controller="Roles" asp-action="Index">Role Management</a>
+                <a class="@GetAdminNavClass("Uploads")" asp-area="Admin" asp-controller="Uploads" asp-action="Index">Upload Jobs</a>
+                <a class="@GetAdminNavClass("Reports")" asp-area="Admin" asp-controller="Reports" asp-action="Index">Reports</a>
+                <a class="sfa-nav-link" asp-area="Mobile" asp-controller="Agent" asp-action="Dashboard">Mobile App</a>
+            </nav>
+        </aside>
+
+        <div class="sfa-admin-main">
+            <header class="sfa-admin-topbar">
+                <div>
+                    <p class="sfa-eyebrow">Sales Force Automation</p>
+                    <h1 class="sfa-page-title">@(ViewData["Title"] ?? "Admin")</h1>
+                </div>
+                <form asp-area="Identity" asp-page="/Account/Logout" method="post">
+                    <button class="sfa-btn sfa-btn-ghost" type="submit">Logout</button>
+                </form>
+            </header>
+
+            <main class="sfa-content-wrap">
+                @if (TempData["SuccessMessage"] is string successMessage)
+                {
+                    <div class="sfa-alert sfa-alert-success">@successMessage</div>
+                }
+                @if (TempData["ErrorMessage"] is string errorMessage)
+                {
+                    <div class="sfa-alert sfa-alert-danger">@errorMessage</div>
+                }
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

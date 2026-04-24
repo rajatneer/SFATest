@@ -1,0 +1,57 @@
+@model IEnumerable<SfaApp.Web.Models.Identity.ApplicationUser>
+
+@{
+    ViewData["Title"] = "User Management";
+    var roles = ViewBag.Roles as IEnumerable<Microsoft.AspNetCore.Identity.IdentityRole> ?? [];
+}
+
+<section class="sfa-panel p-3 p-md-4 mb-3">
+    <h2 class="h4 mb-2">User Management</h2>
+
+    <div class="sfa-section-title">Create User</div>
+    <div class="sfa-soft-block">
+        <form asp-area="Admin" asp-controller="Users" asp-action="Create" method="post">
+            <div class="row g-2">
+                <div class="col-md-3"><input class="form-control" name="Email" placeholder="Email" required /></div>
+                <div class="col-md-3"><input class="form-control" name="FullName" placeholder="Full Name" required /></div>
+                <div class="col-md-3"><input class="form-control" name="Password" placeholder="Password" required /></div>
+                <div class="col-md-2">
+                    <select class="form-select" name="RoleName">
+                        @foreach (var role in roles)
+                        {
+                            <option value="@role.Name">@role.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-1"><button class="sfa-btn sfa-btn-primary w-100" type="submit">Add</button></div>
+            </div>
+        </form>
+    </div>
+</section>
+
+<section class="sfa-panel p-3 p-md-4">
+    <div class="table-responsive sfa-table-wrap">
+        <table class="table mb-0 sfa-table">
+            <thead><tr><th>Email</th><th>Full Name</th><th>Status</th></tr></thead>
+            <tbody>
+            @foreach (var user in Model)
+            {
+                <tr>
+                    <td>@user.Email</td>
+                    <td>@user.FullName</td>
+                    <td>
+                        @if (user.IsActive)
+                        {
+                            <span class="sfa-chip sfa-chip-success">Active</span>
+                        }
+                        else
+                        {
+                            <span class="sfa-chip sfa-chip-danger">Inactive</span>
+                        }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</section>

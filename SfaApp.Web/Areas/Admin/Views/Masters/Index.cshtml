@@ -1,0 +1,84 @@
+@model MasterSetupViewModel
+
+@{
+    ViewData["Title"] = "Master Management";
+}
+
+<section class="sfa-panel p-3 p-md-4 mb-3">
+    <h2 class="h4 mb-2">Master Management</h2>
+    <p class="sfa-page-subtitle">Territories, distributors and routes for setup admin UI.</p>
+
+    <div class="row g-3">
+    <div class="col-lg-4">
+        <div class="sfa-soft-block h-100">
+            <div class="sfa-section-title">Add Territory</div>
+                <form asp-area="Admin" asp-controller="Masters" asp-action="CreateTerritory" method="post">
+                    <div class="mb-2"><input class="form-control" name="territoryCode" placeholder="Territory Code" required /></div>
+                    <div class="mb-2"><input class="form-control" name="territoryName" placeholder="Territory Name" required /></div>
+                    <button class="sfa-btn sfa-btn-primary" type="submit">Save Territory</button>
+                </form>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="sfa-soft-block h-100">
+            <div class="sfa-section-title">Add Distributor</div>
+                <form asp-area="Admin" asp-controller="Masters" asp-action="CreateDistributor" method="post">
+                    <div class="mb-2"><input class="form-control" name="distributorCode" placeholder="Distributor Code" required /></div>
+                    <div class="mb-2"><input class="form-control" name="distributorName" placeholder="Distributor Name" required /></div>
+                    <button class="sfa-btn sfa-btn-primary" type="submit">Save Distributor</button>
+                </form>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="sfa-soft-block h-100">
+            <div class="sfa-section-title">Add Route</div>
+                <form asp-area="Admin" asp-controller="Masters" asp-action="CreateRoute" method="post">
+                    <div class="mb-2"><input class="form-control" name="routeCode" placeholder="Route Code" required /></div>
+                    <div class="mb-2"><input class="form-control" name="routeName" placeholder="Route Name" required /></div>
+                    <div class="mb-2"><select class="form-select" name="territoryId" asp-items="ViewBag.TerritoryOptions" required></select></div>
+                    <div class="mb-2"><select class="form-select" name="distributorId" asp-items="ViewBag.DistributorOptions" required></select></div>
+                    <button class="sfa-btn sfa-btn-primary" type="submit">Save Route</button>
+                </form>
+        </div>
+    </div>
+</div>
+
+</section>
+
+<section class="sfa-panel p-3 p-md-4">
+<div class="row g-3">
+    <div class="col-lg-4">
+        <div class="sfa-soft-block">
+            <div class="sfa-section-title">Territories</div>
+            <ul class="list-group list-group-flush">
+                @foreach (var t in Model.Territories)
+                {
+                    <li class="list-group-item">@t.TerritoryCode - @t.TerritoryName</li>
+                }
+            </ul>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="sfa-soft-block">
+            <div class="sfa-section-title">Distributors</div>
+            <ul class="list-group list-group-flush">
+                @foreach (var d in Model.Distributors)
+                {
+                    <li class="list-group-item">@d.DistributorCode - @d.DistributorName</li>
+                }
+            </ul>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="sfa-soft-block">
+            <div class="sfa-section-title">Routes</div>
+            <ul class="list-group list-group-flush">
+                @foreach (var r in Model.Routes)
+                {
+                    <li class="list-group-item">@r.RouteCode - @r.RouteName <small class="text-muted">(@r.Territory?.TerritoryName / @r.Distributor?.DistributorName)</small></li>
+                }
+            </ul>
+        </div>
+    </div>
+</div>
+</section>

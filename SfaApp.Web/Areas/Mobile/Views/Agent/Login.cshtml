@@ -1,0 +1,31 @@
+@model MobileLoginViewModel
+
+@{
+    ViewData["Title"] = "Login";
+}
+
+<section class="sfa-mobile-card">
+    <h1 class="h4 mb-1">Agent Login</h1>
+    <p class="sfa-page-subtitle">Use your sales rep credentials.</p>
+
+    <form asp-action="Login" method="post">
+        <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
+        <div class="mb-2">
+            <label asp-for="Username" class="form-label"></label>
+            <input asp-for="Username" class="form-control" />
+        </div>
+        <div class="mb-2">
+            <label asp-for="Password" class="form-label"></label>
+            <input asp-for="Password" class="form-control" />
+        </div>
+        <div class="form-check mb-3">
+            <input asp-for="RememberMe" class="form-check-input" />
+            <label asp-for="RememberMe" class="form-check-label"></label>
+        </div>
+        <button type="submit" class="sfa-btn sfa-btn-primary w-100">Login</button>
+    </form>
+</section>
+
+<div class="sfa-alert mt-3" style="background:#edf4ff; border-color:#c9d9ff; color:#264276;">
+    Demo rep: rep@sfa.local / Rep@12345
+</div>

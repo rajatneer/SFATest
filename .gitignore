@@ -1,0 +1,27 @@
+# Build outputs
+**/bin/
+**/obj/
+
+# User/workspace files
+.vs/
+.vscode/
+*.user
+*.suo
+
+# Logs and temporary files
+*.log
+*.tmp
+
+# Local runtime/data artifacts
+SfaApp.Web/App_Data/dpkeys/
+SfaApp.Web/App_Data/uploads/
+SfaApp.Web/App_Data/upload-errors/
+mysql-local/data/
+mysql-local/tmp/
+
+# OS files
+Thumbs.db
+Desktop.ini
+
+# Office temp files
+~$*.docx

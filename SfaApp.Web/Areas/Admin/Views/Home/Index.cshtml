@@ -1,0 +1,33 @@
+@model AdminDashboardViewModel
+
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<section class="sfa-panel p-3 p-md-4">
+    <h2 class="h4 mb-2">Admin Dashboard</h2>
+    <p class="sfa-page-subtitle">Setup and monitor master data for SFA operations.</p>
+
+    <div class="sfa-kpi-grid">
+        <article class="sfa-kpi-card">
+            <div class="sfa-kpi-label">Users</div>
+            <div class="sfa-kpi-value">@Model.UserCount</div>
+        </article>
+        <article class="sfa-kpi-card">
+            <div class="sfa-kpi-label">Territories</div>
+            <div class="sfa-kpi-value">@Model.TerritoryCount</div>
+        </article>
+        <article class="sfa-kpi-card">
+            <div class="sfa-kpi-label">Routes</div>
+            <div class="sfa-kpi-value">@Model.RouteCount</div>
+        </article>
+        <article class="sfa-kpi-card">
+            <div class="sfa-kpi-label">Customers</div>
+            <div class="sfa-kpi-value">@Model.CustomerCount</div>
+        </article>
+        <article class="sfa-kpi-card">
+            <div class="sfa-kpi-label">Pending Upload Jobs</div>
+            <div class="sfa-kpi-value">@Model.UploadJobsPending</div>
+        </article>
+    </div>
+</section>

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SFA Agent Offline</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f6f6f3 0%, #e8efe7 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1f2937;
+        }
+
+        .panel {
+            width: min(92vw, 420px);
+            background: #ffffff;
+            border: 1px solid #d6dfd5;
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(15, 23, 42, 0.09);
+            padding: 24px;
+        }
+
+        h1 {
+            margin: 0 0 12px;
+            font-size: 1.2rem;
+        }
+
+        p {
+            margin: 0 0 10px;
+            line-height: 1.45;
+        }
+
+        .muted {
+            color: #556070;
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+<body>
+    <section class="panel">
+        <h1>You are offline</h1>
+        <p>The SFA mobile shell is available, and offline-enabled submissions will be stored on this device.</p>
+        <p class="muted">Reconnect to the internet to sync pending records automatically, or open Pending Sync Queue to sync manually.</p>
+    </section>
+</body>
+</html>

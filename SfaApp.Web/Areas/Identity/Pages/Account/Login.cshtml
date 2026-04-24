@@ -1,0 +1,44 @@
+@page
+@model SfaApp.Web.Areas.Identity.Pages.Account.LoginModel
+@{
+    ViewData["Title"] = "Log in";
+}
+
+<section class="sfa-auth-card">
+    <p class="sfa-auth-eyebrow">Sales Force Automation</p>
+    <h1 class="h3 mb-1">Welcome Back</h1>
+    <p class="sfa-page-subtitle mb-3">Sign in to continue to your dashboard.</p>
+
+    <form id="account" method="post">
+        <input type="hidden" asp-for="ReturnUrl" />
+        <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
+
+        <div class="mb-2">
+            <label asp-for="Input.Email" class="form-label"></label>
+            <input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" />
+            <span asp-validation-for="Input.Email" class="text-danger small"></span>
+        </div>
+
+        <div class="mb-2">
+            <label asp-for="Input.Password" class="form-label"></label>
+            <input asp-for="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" />
+            <span asp-validation-for="Input.Password" class="text-danger small"></span>
+        </div>
+
+        <div class="form-check mb-3">
+            <input class="form-check-input" asp-for="Input.RememberMe" />
+            <label asp-for="Input.RememberMe" class="form-check-label"></label>
+        </div>
+
+        <button id="login-submit" type="submit" class="sfa-btn sfa-btn-primary w-100">Log in</button>
+    </form>
+
+    <div class="d-grid gap-2 mt-3">
+        <a class="sfa-btn sfa-btn-ghost" asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl">Create New Account</a>
+        <a class="sfa-auth-text-link" asp-area="" asp-controller="Home" asp-action="Index">Back to Main Site</a>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,17 @@
+{
+  "name": "SFA Agent Mobile",
+  "short_name": "SFA Agent",
+  "start_url": "/mobile",
+  "scope": "/mobile",
+  "display": "standalone",
+  "background_color": "#f6f6f3",
+  "theme_color": "#1f2937",
+  "description": "Sales field app with offline capture and background sync.",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "any",
+      "type": "image/x-icon"
+    }
+  ]
+}

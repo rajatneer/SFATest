@@ -1,0 +1,52 @@
+@model IEnumerable<SyncQueueItem>
+
+@{
+    ViewData["Title"] = "Pending Sync Queue";
+}
+
+<section class="sfa-mobile-card">
+    <h1 class="h5 mb-1">Pending Sync Queue</h1>
+    <p class="sfa-page-subtitle">Review pending or failed records waiting for sync.</p>
+
+    <div class="sfa-soft-block mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <div class="fw-semibold">Device Offline Queue</div>
+            <span class="sfa-chip sfa-chip-warning" data-mobile-local-count>0 pending</span>
+        </div>
+        <p class="small text-muted mb-2">Records saved while offline are stored on this device and synced in background when internet is available.</p>
+        <button type="button" class="sfa-btn sfa-btn-secondary w-100" data-mobile-sync-now>Sync Local Queue Now</button>
+        <div class="small mt-2 text-muted" data-mobile-sync-status></div>
+        <div class="mt-2" data-mobile-local-queue></div>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="sfa-alert sfa-alert-success">All records are synced.</div>
+    }
+    else
+    {
+        <div class="d-grid gap-2">
+        @foreach (var item in Model)
+        {
+            var nextRetryAtUtc = item.SyncStatus == SyncStatus.Failed && item.RetryCount < 12
+                ? (item.LastRetryAtUtc ?? item.CreatedAtUtc).AddMinutes(5)
+                : (DateTime?)null;
+
+            <div class="sfa-soft-block">
+                <div class="fw-semibold">@item.EntityType (@item.EntityClientUuid)</div>
+                <div class="small text-muted">Status: @item.SyncStatus | Retry: @item.RetryCount</div>
+                @if (nextRetryAtUtc.HasValue)
+                {
+                    <div class="small text-muted">Next retry (UTC): @nextRetryAtUtc.Value.ToString("dd-MMM-yyyy HH:mm")</div>
+                }
+                @if (!string.IsNullOrWhiteSpace(item.LastErrorMessage))
+                {
+                    <div class="small mt-1"><span class="sfa-chip sfa-chip-danger">@item.LastErrorMessage</span></div>
+                }
+            </div>
+        }
+        </div>
+    }
+
+    <a class="sfa-btn sfa-btn-ghost mt-3" asp-action="Dashboard">Back</a>
+</section>

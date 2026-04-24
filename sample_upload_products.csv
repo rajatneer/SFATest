@@ -1,0 +1,3 @@
+ProductCode,Sku,Name,Uom,UnitPrice,Mrp,IsActive
+PRD-901,SKU-901,Phase3 Product 901,PCS,145.50,160,true
+PRD-902,SKU-902,Phase3 Product 902,PCS,99.25,115,true

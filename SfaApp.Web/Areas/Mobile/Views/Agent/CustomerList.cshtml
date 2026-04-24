@@ -1,0 +1,32 @@
+@model IEnumerable<Customer>
+
+@{
+    ViewData["Title"] = "Customer List";
+}
+
+<section class="sfa-mobile-card">
+    <h1 class="h5 mb-1">Customer List</h1>
+    <p class="sfa-page-subtitle">Open a customer to check-in and create orders.</p>
+
+    <div class="d-grid gap-2">
+    @foreach (var customer in Model)
+    {
+        <a class="sfa-soft-block" asp-action="CustomerDetail" asp-route-id="@customer.Id">
+            <div class="fw-semibold">@customer.Name</div>
+            <div class="small text-muted">@customer.CustomerCode | @customer.City</div>
+            <div class="small mt-1">
+                @if (customer.Latitude.HasValue && customer.Longitude.HasValue)
+                {
+                    <span class="sfa-chip sfa-chip-success">Coordinates Available</span>
+                }
+                else
+                {
+                    <span class="sfa-chip sfa-chip-warning">Coordinates Missing</span>
+                }
+            </div>
+        </a>
+    }
+    </div>
+
+    <a class="sfa-btn sfa-btn-ghost mt-3" asp-action="Dashboard">Back</a>
+</section>

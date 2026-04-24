@@ -1,0 +1,132 @@
+@model ReportsIndexViewModel
+
+@{
+    ViewData["Title"] = "Reports";
+}
+
+<section class="sfa-panel p-3 p-md-4 mb-3">
+    <h2 class="h4 mb-2">Reports</h2>
+    <p class="sfa-page-subtitle">Filter by local business date, sales rep, and route. Exports respect the same filter set.</p>
+
+    <div class="sfa-section-title">Filters</div>
+    <div class="sfa-soft-block">
+        <form asp-area="Admin" asp-controller="Reports" asp-action="Index" method="get" class="row g-2">
+            <div class="col-md-3">
+                <label class="form-label" for="fromDate">From Date</label>
+                <input id="fromDate" class="form-control" type="date" name="fromDate" value="@(Model.FromDate?.ToString("yyyy-MM-dd"))" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" for="toDate">To Date</label>
+                <input id="toDate" class="form-control" type="date" name="toDate" value="@(Model.ToDate?.ToString("yyyy-MM-dd"))" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" for="repUserId">Sales Rep</label>
+                <select id="repUserId" class="form-select" name="repUserId">
+                    <option value="">All</option>
+                    @foreach (var rep in Model.SalesReps)
+                    {
+                        if (Model.RepUserId == rep.Value)
+                        {
+                            <option value="@rep.Value" selected>@rep.Text</option>
+                        }
+                        else
+                        {
+                            <option value="@rep.Value">@rep.Text</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" for="routeId">Route</label>
+                <select id="routeId" class="form-select" name="routeId">
+                    <option value="">All</option>
+                    @foreach (var route in Model.Routes)
+                    {
+                        if (Model.RouteId?.ToString() == route.Value)
+                        {
+                            <option value="@route.Value" selected>@route.Text</option>
+                        }
+                        else
+                        {
+                            <option value="@route.Value">@route.Text</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="col-12 d-flex gap-2 mt-2 flex-wrap">
+                <button class="sfa-btn sfa-btn-primary" type="submit">Apply Filters</button>
+                <a class="sfa-btn sfa-btn-secondary"
+                   asp-area="Admin"
+                   asp-controller="Reports"
+                   asp-action="Export"
+                   asp-route-format="csv"
+                   asp-route-fromDate="@(Model.FromDate?.ToString("yyyy-MM-dd"))"
+                   asp-route-toDate="@(Model.ToDate?.ToString("yyyy-MM-dd"))"
+                   asp-route-repUserId="@Model.RepUserId"
+                   asp-route-routeId="@Model.RouteId">Export CSV</a>
+                <a class="sfa-btn sfa-btn-secondary"
+                   asp-area="Admin"
+                   asp-controller="Reports"
+                   asp-action="Export"
+                   asp-route-format="xlsx"
+                   asp-route-fromDate="@(Model.FromDate?.ToString("yyyy-MM-dd"))"
+                   asp-route-toDate="@(Model.ToDate?.ToString("yyyy-MM-dd"))"
+                   asp-route-repUserId="@Model.RepUserId"
+                   asp-route-routeId="@Model.RouteId">Export XLSX</a>
+            </div>
+        </form>
+    </div>
+</section>
+
+<section class="sfa-panel p-3 p-md-4 mb-3">
+    <div class="sfa-kpi-grid">
+        <article class="sfa-kpi-card"><div class="sfa-kpi-label">Customers Without Coordinates</div><div class="sfa-kpi-value">@Model.CustomersWithoutCoordinates</div></article>
+        <article class="sfa-kpi-card"><div class="sfa-kpi-label">Pending Day End Count</div><div class="sfa-kpi-value">@Model.PendingDayEndCount</div></article>
+        <article class="sfa-kpi-card"><div class="sfa-kpi-label">Total Orders (Range)</div><div class="sfa-kpi-value">@Model.TotalOrders</div></article>
+        <article class="sfa-kpi-card"><div class="sfa-kpi-label">Delivered Orders (Range)</div><div class="sfa-kpi-value">@Model.DeliveredOrders</div></article>
+        <article class="sfa-kpi-card"><div class="sfa-kpi-label">Today's Orders (Local)</div><div class="sfa-kpi-value">@Model.TodayOrders</div></article>
+        <article class="sfa-kpi-card"><div class="sfa-kpi-label">Skipped Visits (Range)</div><div class="sfa-kpi-value">@Model.SkippedVisits</div></article>
+        <article class="sfa-kpi-card"><div class="sfa-kpi-label">Outside Tolerance Visits (Range)</div><div class="sfa-kpi-value">@Model.OutsideGeoToleranceVisits</div></article>
+        <article class="sfa-kpi-card"><div class="sfa-kpi-label">Pending Sync Queue (Range)</div><div class="sfa-kpi-value">@Model.PendingSyncItems</div></article>
+    </div>
+</section>
+
+<section class="sfa-panel p-3 p-md-4">
+    <div class="sfa-section-title">Filtered Orders</div>
+    <div class="table-responsive sfa-table-wrap">
+        <table class="table mb-0 sfa-table">
+            <thead>
+                <tr>
+                    <th>Order Number</th>
+                    <th>Order Date (UTC)</th>
+                    <th>Rep</th>
+                    <th>Route</th>
+                    <th>Customer</th>
+                    <th>Status</th>
+                    <th class="text-end">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (!Model.Orders.Any())
+            {
+                <tr><td colspan="7" class="text-muted">No orders found for selected filters.</td></tr>
+            }
+            else
+            {
+                @foreach (var order in Model.Orders)
+                {
+                    <tr>
+                        <td>@order.OrderNumber</td>
+                        <td>@order.OrderDateUtc.ToString("dd-MMM-yyyy HH:mm")</td>
+                        <td>@order.RepName</td>
+                        <td>@order.RouteName</td>
+                        <td>@order.CustomerName</td>
+                        <td>@order.Status</td>
+                        <td class="text-end">@order.TotalAmount.ToString("0.00")</td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+</section>

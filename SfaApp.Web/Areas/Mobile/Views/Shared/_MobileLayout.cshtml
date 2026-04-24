@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+    <title>@ViewData["Title"] - Agent Mobile</title>
+    <meta name="theme-color" content="#1f2937" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+    <link rel="manifest" href="~/manifest.webmanifest" asp-append-version="true" />
+    <link rel="apple-touch-icon" href="~/favicon.ico" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+@{
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? string.Empty;
+
+    string GetMobileNavClass(string actionName)
+    {
+        return string.Equals(currentAction, actionName, StringComparison.OrdinalIgnoreCase)
+            ? "sfa-mobile-nav-link is-active"
+            : "sfa-mobile-nav-link";
+    }
+}
+<body>
+    <div class="sfa-mobile-background">
+        <div class="sfa-mobile-shell">
+            <header class="sfa-mobile-header">
+                <span class="sfa-mobile-brand">SFA Agent</span>
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <form asp-area="Mobile" asp-controller="Agent" asp-action="Logout" method="post">
+                    <button class="sfa-btn sfa-btn-ghost" type="submit">Logout</button>
+                </form>
+            }
+            </header>
+
+            <main class="sfa-mobile-main">
+                <div class="sfa-alert sfa-alert-warning d-none" data-network-status></div>
+                @if (TempData["SuccessMessage"] is string successMessage)
+                {
+                    <div class="sfa-alert sfa-alert-success">@successMessage</div>
+                }
+                @if (TempData["ErrorMessage"] is string errorMessage)
+                {
+                    <div class="sfa-alert sfa-alert-danger">@errorMessage</div>
+                }
+                @RenderBody()
+            </main>
+
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <nav class="sfa-mobile-bottom-nav">
+                    <a class="@GetMobileNavClass("Dashboard")" asp-area="Mobile" asp-controller="Agent" asp-action="Dashboard">Home</a>
+                    <a class="@GetMobileNavClass("RouteSelection")" asp-area="Mobile" asp-controller="Agent" asp-action="RouteSelection">Routes</a>
+                    <a class="@GetMobileNavClass("CustomerList")" asp-area="Mobile" asp-controller="Agent" asp-action="CustomerList">Customers</a>
+                    <a class="@GetMobileNavClass("PendingSyncQueue")" asp-area="Mobile" asp-controller="Agent" asp-action="PendingSyncQueue">Sync</a>
+                </nav>
+            }
+        </div>
+    </div>
+
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        if ("serviceWorker" in navigator) {
+            window.addEventListener("load", function () {
+                navigator.serviceWorker.register("/service-worker.js").catch(function () {
+                    // Swallow registration errors to avoid blocking mobile workflows.
+                });
+            });
+        }
+    </script>
+    <script src="~/js/mobile-agent.js" asp-append-version="true"></script>
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

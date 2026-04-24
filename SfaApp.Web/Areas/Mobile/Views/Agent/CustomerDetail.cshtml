@@ -1,0 +1,25 @@
+@model Customer
+
+@{
+    ViewData["Title"] = "Customer Detail";
+}
+
+<section class="sfa-mobile-card">
+    <h1 class="h5 mb-1">Customer Detail</h1>
+
+    <div class="sfa-soft-block mb-3">
+        <div class="fw-semibold">@Model.Name (@Model.CustomerCode)</div>
+        <div class="small text-muted">@Model.ContactPerson | @Model.Phone</div>
+        <div class="small text-muted">@Model.AddressLine1 @Model.AddressLine2 @Model.City @Model.State</div>
+        <div class="small mt-2">
+            Coordinates: @(Model.Latitude?.ToString("0.0000000") ?? "NA"), @(Model.Longitude?.ToString("0.0000000") ?? "NA")
+        </div>
+    </div>
+
+    <div class="d-grid gap-2">
+        <a class="sfa-btn sfa-btn-primary" asp-action="CheckIn" asp-route-customerId="@Model.Id">Check-In / Coordinate Capture</a>
+        <a class="sfa-btn sfa-btn-secondary" asp-action="OrderCreation" asp-route-customerId="@Model.Id">Order Creation</a>
+    </div>
+
+    <a class="sfa-btn sfa-btn-ghost mt-3" asp-action="CustomerList">Back to list</a>
+</section>

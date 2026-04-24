@@ -1,0 +1,45 @@
+@model CheckoutViewModel
+
+@{
+    ViewData["Title"] = "Visit Checkout";
+    var visit = ViewBag.Visit as Visit;
+}
+
+<section class="sfa-mobile-card">
+    <h1 class="h5 mb-2">Visit Notes / Checkout</h1>
+
+    @if (visit is not null)
+    {
+        <div class="sfa-alert mb-3" style="background:#edf4ff; border-color:#c9d9ff; color:#264276;">
+            Customer: <strong>@visit.Customer?.Name</strong><br />
+            Check-in time: @visit.CheckinTimestampUtc?.ToString("dd-MMM HH:mm") UTC
+        </div>
+    }
+
+    <form asp-action="VisitCheckout" method="post" data-auto-geolocation="true" data-lat-field="CheckoutLat" data-lng-field="CheckoutLong" data-offline-enabled="true" data-offline-entity="VisitCheckout">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <input asp-for="VisitId" type="hidden" />
+        <div class="mb-2">
+            <label asp-for="CheckoutLat" class="form-label"></label>
+            <input asp-for="CheckoutLat" class="form-control" type="number" step="0.0000001" readonly placeholder="Auto latitude" />
+        </div>
+        <div class="mb-2">
+            <label asp-for="CheckoutLong" class="form-label"></label>
+            <input asp-for="CheckoutLong" class="form-control" type="number" step="0.0000001" readonly placeholder="Auto longitude" />
+        </div>
+        <div class="mb-2 small text-muted" data-geo-status>Location will be captured automatically on submit.</div>
+        <div class="mb-2 small text-muted" data-offline-status></div>
+        <div class="mb-2">
+            <label asp-for="VisitNotes" class="form-label"></label>
+            <textarea asp-for="VisitNotes" class="form-control" rows="3"></textarea>
+        </div>
+        <div class="mb-3">
+            <label asp-for="VisitStatus" class="form-label">Visit Status</label>
+            <select asp-for="VisitStatus" class="form-select">
+                <option value="Completed">Completed</option>
+                <option value="Skipped">Skipped</option>
+            </select>
+        </div>
+        <button class="sfa-btn sfa-btn-primary w-100" type="submit">Save Checkout</button>
+    </form>
+</section>

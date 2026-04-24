@@ -1,0 +1,44 @@
+@model MobileDashboardViewModel
+
+@{
+    ViewData["Title"] = "Home";
+}
+
+<section class="sfa-mobile-card mb-3">
+    <h1 class="h5 mb-1">Home Dashboard</h1>
+    <p class="sfa-page-subtitle mb-2">Track your day status and complete route tasks.</p>
+
+    @if (Model.ActiveSession is null)
+    {
+        <form asp-action="StartDay" method="post" class="row g-2" data-auto-geolocation="true" data-lat-field="startLat" data-lng-field="startLong" data-offline-enabled="true" data-offline-entity="StartDay">
+            <div class="col-6"><input class="form-control" type="number" step="0.0000001" name="startLat" placeholder="Auto latitude" readonly /></div>
+            <div class="col-6"><input class="form-control" type="number" step="0.0000001" name="startLong" placeholder="Auto longitude" readonly /></div>
+            <div class="col-12 small text-muted" data-geo-status>Location will be captured automatically on submit.</div>
+            <div class="col-12 small text-muted" data-offline-status></div>
+            <div class="col-12"><button class="sfa-btn sfa-btn-primary w-100" type="submit">Start Day</button></div>
+        </form>
+    }
+    else
+    {
+        <div class="sfa-inline-stat"><span>Day started</span><strong>@Model.ActiveSession.StartDayTimestampUtc.ToString("HH:mm") UTC</strong></div>
+        <div class="sfa-inline-stat"><span>Active route</span><strong>@(Model.ActiveRouteName ?? "Not selected")</strong></div>
+        <div class="sfa-inline-stat"><span>Pending sync</span><strong>@Model.PendingSyncCount</strong></div>
+        <div class="sfa-inline-stat mb-3"><span>Visited / Orders</span><strong>@Model.VisitedCustomers / @Model.OrdersCreated</strong></div>
+
+        <div class="d-grid gap-2 mt-2">
+            <a class="sfa-btn sfa-btn-primary" asp-action="RouteSelection">Route Selection</a>
+            <a class="sfa-btn sfa-btn-secondary" asp-action="CustomerList">Customer List</a>
+            <a class="sfa-btn sfa-btn-secondary" asp-action="PendingSyncQueue">Pending Sync Queue</a>
+        </div>
+
+        <hr class="my-3" />
+
+        <form asp-action="EndDay" method="post" class="row g-2" data-auto-geolocation="true" data-lat-field="endLat" data-lng-field="endLong" data-offline-enabled="true" data-offline-entity="EndDay">
+            <div class="col-6"><input class="form-control" type="number" step="0.0000001" name="endLat" placeholder="Auto latitude" readonly /></div>
+            <div class="col-6"><input class="form-control" type="number" step="0.0000001" name="endLong" placeholder="Auto longitude" readonly /></div>
+            <div class="col-12 small text-muted" data-geo-status>Location will be captured automatically on submit.</div>
+            <div class="col-12 small text-muted" data-offline-status></div>
+            <div class="col-12"><button class="sfa-btn w-100" style="background:#ffe8e8; border-color:#ffc9c9; color:#8f2727;" type="submit">End Day</button></div>
+        </form>
+    }
+</section>

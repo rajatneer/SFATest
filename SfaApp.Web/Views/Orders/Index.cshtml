@@ -1,0 +1,43 @@
+@model IEnumerable<SalesOrder>
+
+@{
+    ViewData["Title"] = "Orders";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 mb-0">Sales Orders</h1>
+    <a class="btn btn-primary" asp-action="Create">Create Order</a>
+</div>
+
+@if (TempData["SuccessMessage"] is string success)
+{
+    <div class="alert alert-success">@success</div>
+}
+
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-striped mb-0 align-middle">
+            <thead>
+                <tr>
+                    <th>Order #</th>
+                    <th>Customer</th>
+                    <th>Date (UTC)</th>
+                    <th>Status</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.OrderNumber</td>
+                    <td>@item.Customer?.Name</td>
+                    <td>@item.OrderDateUtc.ToString("dd-MMM-yyyy HH:mm")</td>
+                    <td><span class="badge bg-info text-dark">@item.Status</span></td>
+                    <td>@item.TotalAmount.ToString("N2")</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

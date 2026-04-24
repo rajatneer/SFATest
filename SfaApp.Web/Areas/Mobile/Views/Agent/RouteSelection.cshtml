@@ -1,0 +1,26 @@
+@model IEnumerable<SalesRoute>
+
+@{
+    ViewData["Title"] = "Route Selection";
+}
+
+<section class="sfa-mobile-card">
+    <h1 class="h5 mb-1">Route Selection</h1>
+    <p class="sfa-page-subtitle">Choose the route you will operate for this day.</p>
+
+    <div class="d-grid gap-2">
+    @foreach (var route in Model)
+    {
+        <div class="sfa-soft-block">
+            <div class="fw-semibold">@route.RouteName (@route.RouteCode)</div>
+            <div class="small text-muted">@route.Territory?.TerritoryName / @route.Distributor?.DistributorName</div>
+            <form asp-action="SelectRoute" method="post" class="mt-2">
+                <input type="hidden" name="routeId" value="@route.Id" />
+                <button class="sfa-btn sfa-btn-primary w-100" type="submit">Select Route</button>
+            </form>
+        </div>
+    }
+    </div>
+
+    <a class="sfa-btn sfa-btn-ghost mt-3" asp-action="Dashboard">Back</a>
+</section>

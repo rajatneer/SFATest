@@ -1,0 +1,26 @@
+@model CreateMobileOrderViewModel
+
+@{
+    ViewData["Title"] = "Order Creation";
+}
+
+<section class="sfa-mobile-card">
+    <h1 class="h5 mb-2">Order Creation</h1>
+
+    <form asp-action="OrderCreation" method="post" data-offline-enabled="true" data-offline-entity="OrderCreation">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <input asp-for="CustomerId" type="hidden" />
+        <input asp-for="VisitId" type="hidden" />
+
+        <div class="mb-2">
+            <label asp-for="ProductId" class="form-label">Product</label>
+            <select asp-for="ProductId" class="form-select" asp-items="ViewBag.ProductOptions"></select>
+        </div>
+        <div class="mb-3">
+            <label asp-for="Quantity" class="form-label"></label>
+            <input asp-for="Quantity" class="form-control" type="number" step="0.001" />
+        </div>
+        <div class="mb-2 small text-muted" data-offline-status></div>
+        <button class="sfa-btn sfa-btn-primary w-100" type="submit">Create Order</button>
+    </form>
+</section>

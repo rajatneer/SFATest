@@ -1,0 +1,39 @@
+@model SalesOrder
+
+@{
+    ViewData["Title"] = "Order Summary";
+}
+
+<section class="sfa-mobile-card mb-3">
+    <h1 class="h5 mb-2">Order Summary</h1>
+    <div class="small">
+        <div>Order #: <strong>@Model.OrderNumber</strong></div>
+        <div>Customer: <strong>@Model.Customer?.Name</strong></div>
+        <div>Distributor: <strong>@Model.Distributor?.DistributorName</strong></div>
+        <div>Status: <strong>@Model.Status</strong></div>
+        <div>Total: <strong>@Model.NetAmount.ToString("N2")</strong></div>
+    </div>
+</section>
+
+<section class="sfa-mobile-card mb-3">
+    <div class="table-responsive sfa-table-wrap">
+        <table class="table mb-0 table-sm sfa-table">
+            <thead><tr><th>Product</th><th>Qty</th><th>Total</th></tr></thead>
+            <tbody>
+            @foreach (var line in Model.Lines)
+            {
+                <tr>
+                    <td>@line.Product?.Name</td>
+                    <td>@line.Quantity</td>
+                    <td>@line.LineTotal.ToString("N2")</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<div class="d-grid gap-2">
+    <a class="sfa-btn sfa-btn-secondary" asp-action="CustomerList">Back to Customer List</a>
+    <a class="sfa-btn sfa-btn-primary" asp-action="Dashboard">Go to Home</a>
+</div>
