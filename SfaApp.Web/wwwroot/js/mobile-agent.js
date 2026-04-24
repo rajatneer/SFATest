@@ -266,6 +266,43 @@
         window.sessionStorage.removeItem(OFFLINE_LOGIN_REDIRECT_ATTEMPTED_KEY);
     }
 
+    async function primeOfflinePages() {
+        if (!navigator.onLine || !isAuthenticatedPage()) {
+            return;
+        }
+
+        const staticUrls = [
+            "/mobile/Agent/Dashboard",
+            "/mobile/Agent/RouteSelection",
+            "/mobile/Agent/CustomerList",
+            "/mobile/Agent/PendingSyncQueue"
+        ];
+
+        const linkedUrls = Array.from(document.querySelectorAll("a[href^='/mobile/Agent/']"))
+            .map(function (anchor) {
+                return anchor.getAttribute("href");
+            })
+            .filter(function (href) {
+                return !!href;
+            });
+
+        const urlsToPrime = Array.from(new Set(staticUrls.concat(linkedUrls))).slice(0, 25);
+
+        await Promise.all(
+            urlsToPrime.map(async function (url) {
+                try {
+                    await fetch(url, {
+                        method: "GET",
+                        credentials: "same-origin",
+                        cache: "no-store"
+                    });
+                } catch {
+                    // Ignore network/cache priming failures; runtime fallback still applies.
+                }
+            })
+        );
+    }
+
     function hasOfflineAuthHint() {
         const timestampRaw = window.localStorage.getItem(LAST_AUTH_AT_KEY);
         if (!timestampRaw) {
@@ -676,6 +713,8 @@
         if (tryRecoverFromOfflineLoginRedirect()) {
             return;
         }
+
+        await primeOfflinePages();
 
         initializeForms();
         initializeSyncButton();
