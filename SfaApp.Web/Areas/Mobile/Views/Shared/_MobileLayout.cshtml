@@ -23,7 +23,7 @@
             : "sfa-mobile-nav-link";
     }
 }
-<body>
+<body data-is-authenticated="@(User.Identity?.IsAuthenticated == true ? "true" : "false")">
     <div class="sfa-mobile-background">
         <div class="sfa-mobile-shell">
             <header class="sfa-mobile-header">
@@ -38,6 +38,8 @@
 
             <main class="sfa-mobile-main">
                 <div class="sfa-alert sfa-alert-warning d-none" data-network-status></div>
+                <button type="button" class="sfa-btn sfa-btn-secondary w-100 mb-2 d-none" data-pwa-install>Install App</button>
+                <div class="small text-muted mb-2 d-none" data-pwa-install-status></div>
                 @if (TempData["SuccessMessage"] is string successMessage)
                 {
                     <div class="sfa-alert sfa-alert-success">@successMessage</div>

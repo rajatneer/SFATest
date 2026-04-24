@@ -6,8 +6,23 @@
     const IDB_STORE_NAME = "submission_queue";
     const IDB_VERSION = 1;
 
+    const LAST_AUTH_AT_KEY = "sfa_mobile_last_auth_at";
+    const LAST_AUTH_PATH_KEY = "sfa_mobile_last_auth_path";
+    const OFFLINE_LOGIN_REDIRECT_ATTEMPTED_KEY = "sfa_mobile_offline_login_redirect_attempted";
+
+    let deferredInstallPrompt = null;
+
     function supportsIndexedDb() {
         return typeof window.indexedDB !== "undefined";
+    }
+
+    function isLoginPath(pathname) {
+        const normalized = (pathname || "").toLowerCase();
+        return normalized.includes("/mobile/agent/login") || normalized.includes("/identity/account/login");
+    }
+
+    function isAuthenticatedPage() {
+        return document.body.dataset.isAuthenticated === "true";
     }
 
     function toRequestPromise(request) {
@@ -15,6 +30,7 @@
             request.onsuccess = function () {
                 resolve(request.result);
             };
+
             request.onerror = function () {
                 reject(request.error || new Error("IndexedDB request failed."));
             };
@@ -26,9 +42,11 @@
             transaction.oncomplete = function () {
                 resolve();
             };
+
             transaction.onabort = function () {
                 reject(transaction.error || new Error("IndexedDB transaction aborted."));
             };
+
             transaction.onerror = function () {
                 reject(transaction.error || new Error("IndexedDB transaction failed."));
             };
@@ -65,11 +83,11 @@
 
             const db = await openQueueDb();
             try {
-                const tx = db.transaction(IDB_STORE_NAME, "readonly");
-                const store = tx.objectStore(IDB_STORE_NAME);
+                const transaction = db.transaction(IDB_STORE_NAME, "readonly");
+                const store = transaction.objectStore(IDB_STORE_NAME);
                 const request = store.getAll();
                 const result = await toRequestPromise(request);
-                await toTransactionPromise(tx);
+                await toTransactionPromise(transaction);
                 return result || [];
             } finally {
                 db.close();
@@ -83,11 +101,11 @@
 
             const db = await openQueueDb();
             try {
-                const tx = db.transaction(IDB_STORE_NAME, "readwrite");
-                const store = tx.objectStore(IDB_STORE_NAME);
+                const transaction = db.transaction(IDB_STORE_NAME, "readwrite");
+                const store = transaction.objectStore(IDB_STORE_NAME);
                 const request = store.add(item);
                 const id = await toRequestPromise(request);
-                await toTransactionPromise(tx);
+                await toTransactionPromise(transaction);
                 return id;
             } finally {
                 db.close();
@@ -101,10 +119,10 @@
 
             const db = await openQueueDb();
             try {
-                const tx = db.transaction(IDB_STORE_NAME, "readwrite");
-                const store = tx.objectStore(IDB_STORE_NAME);
+                const transaction = db.transaction(IDB_STORE_NAME, "readwrite");
+                const store = transaction.objectStore(IDB_STORE_NAME);
                 store.put(item);
-                await toTransactionPromise(tx);
+                await toTransactionPromise(transaction);
             } finally {
                 db.close();
             }
@@ -117,10 +135,10 @@
 
             const db = await openQueueDb();
             try {
-                const tx = db.transaction(IDB_STORE_NAME, "readwrite");
-                const store = tx.objectStore(IDB_STORE_NAME);
+                const transaction = db.transaction(IDB_STORE_NAME, "readwrite");
+                const store = transaction.objectStore(IDB_STORE_NAME);
                 store.delete(id);
-                await toTransactionPromise(tx);
+                await toTransactionPromise(transaction);
             } finally {
                 db.close();
             }
@@ -172,6 +190,14 @@
         }
     };
 
+    function createClientUuid() {
+        if (window.crypto && typeof window.crypto.randomUUID === "function") {
+            return window.crypto.randomUUID();
+        }
+
+        return "local-" + Date.now() + "-" + Math.floor(Math.random() * 1000000);
+    }
+
     function getCurrentAntiforgeryToken() {
         const tokenInput = document.querySelector("input[name='__RequestVerificationToken']");
         return tokenInput ? tokenInput.value : "";
@@ -186,7 +212,6 @@
         const filtered = entries.filter(function (entry) {
             return entry[0] !== "__RequestVerificationToken";
         });
-
         filtered.unshift(["__RequestVerificationToken", token]);
         return filtered;
     }
@@ -198,6 +223,7 @@
 
         element.textContent = message;
         element.classList.toggle("text-danger", !!isError);
+        element.classList.toggle("d-none", !message);
     }
 
     function setGeoStatus(form, message, isError) {
@@ -205,28 +231,119 @@
     }
 
     function setOfflineStatus(form, message, isError) {
-        const offlineStatus = form.querySelector("[data-offline-status]") || form.querySelector("[data-geo-status]");
-        setStatusMessage(offlineStatus, message, isError);
+        const statusElement = form.querySelector("[data-offline-status]") || form.querySelector("[data-geo-status]");
+        setStatusMessage(statusElement, message, isError);
     }
 
     function setSyncStatus(message, isError) {
         setStatusMessage(document.querySelector("[data-mobile-sync-status]"), message, isError);
     }
 
-    function updateNetworkStatusBanner() {
+    function updateNetworkStatusBanner(customMessage) {
         const banner = document.querySelector("[data-network-status]");
         if (!banner) {
             return;
         }
 
-        if (navigator.onLine) {
+        if (navigator.onLine && !customMessage) {
             banner.classList.add("d-none");
             banner.textContent = "";
             return;
         }
 
         banner.classList.remove("d-none");
-        banner.textContent = "Offline mode active. Submissions will be saved on this device and synced automatically when internet is available.";
+        banner.textContent = customMessage || "Offline mode active. You can continue working and records will be stored locally in IndexedDB.";
+    }
+
+    function rememberAuthenticatedLocation() {
+        if (!isAuthenticatedPage() || isLoginPath(window.location.pathname)) {
+            return;
+        }
+
+        const currentPath = window.location.pathname + window.location.search;
+        window.localStorage.setItem(LAST_AUTH_PATH_KEY, currentPath);
+        window.localStorage.setItem(LAST_AUTH_AT_KEY, Date.now().toString());
+        window.sessionStorage.removeItem(OFFLINE_LOGIN_REDIRECT_ATTEMPTED_KEY);
+    }
+
+    function hasOfflineAuthHint() {
+        const timestampRaw = window.localStorage.getItem(LAST_AUTH_AT_KEY);
+        if (!timestampRaw) {
+            return false;
+        }
+
+        const timestamp = Number.parseInt(timestampRaw, 10);
+        if (Number.isNaN(timestamp)) {
+            return false;
+        }
+
+        const maxAgeMs = 1000 * 60 * 60 * 24 * 7;
+        return Date.now() - timestamp <= maxAgeMs;
+    }
+
+    function tryRecoverFromOfflineLoginRedirect() {
+        if (navigator.onLine || !isLoginPath(window.location.pathname) || !hasOfflineAuthHint()) {
+            return false;
+        }
+
+        if (window.sessionStorage.getItem(OFFLINE_LOGIN_REDIRECT_ATTEMPTED_KEY) === "true") {
+            return false;
+        }
+
+        const lastPath = window.localStorage.getItem(LAST_AUTH_PATH_KEY);
+        if (!lastPath || isLoginPath(lastPath)) {
+            return false;
+        }
+
+        window.sessionStorage.setItem(OFFLINE_LOGIN_REDIRECT_ATTEMPTED_KEY, "true");
+        updateNetworkStatusBanner("Internet is unavailable. Reopening your last working page in offline mode.");
+        window.location.replace(lastPath);
+        return true;
+    }
+
+    function initializeInstallPrompt() {
+        const installButton = document.querySelector("[data-pwa-install]");
+        const installStatus = document.querySelector("[data-pwa-install-status]");
+        if (!installButton) {
+            return;
+        }
+
+        const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+        if (isStandalone) {
+            setStatusMessage(installStatus, "PWA installed on this device.", false);
+            return;
+        }
+
+        window.addEventListener("beforeinstallprompt", function (event) {
+            event.preventDefault();
+            deferredInstallPrompt = event;
+            installButton.classList.remove("d-none");
+            setStatusMessage(installStatus, "Install this app for a full-screen mobile experience and better offline handling.", false);
+        });
+
+        window.addEventListener("appinstalled", function () {
+            deferredInstallPrompt = null;
+            installButton.classList.add("d-none");
+            setStatusMessage(installStatus, "App installed successfully.", false);
+        });
+
+        installButton.addEventListener("click", async function () {
+            if (!deferredInstallPrompt) {
+                setStatusMessage(installStatus, "Install prompt is not available yet on this browser.", true);
+                return;
+            }
+
+            deferredInstallPrompt.prompt();
+            const choice = await deferredInstallPrompt.userChoice;
+            if (choice && choice.outcome === "accepted") {
+                setStatusMessage(installStatus, "Installing app...", false);
+            } else {
+                setStatusMessage(installStatus, "Install dismissed. You can continue with browser mode.", false);
+            }
+
+            deferredInstallPrompt = null;
+            installButton.classList.add("d-none");
+        });
     }
 
     function getSerializableFormEntries(form) {
@@ -248,6 +365,7 @@
             actionUrl: form.action,
             method: (form.method || "POST").toUpperCase(),
             entityType: form.dataset.offlineEntity || new URL(form.action).pathname,
+            entityClientUuid: createClientUuid(),
             payloadEntries: entries,
             createdAtUtc: new Date().toISOString(),
             retryCount: 0,
@@ -257,17 +375,24 @@
         await queueStore.add(queueItem);
     }
 
+    function isLoginResponse(response) {
+        if (!response || !response.redirected || !response.url) {
+            return false;
+        }
+
+        const responsePath = new URL(response.url, window.location.origin).pathname;
+        return isLoginPath(responsePath);
+    }
+
     async function syncQueuedSubmissions() {
         if (!navigator.onLine) {
             return { total: 0, synced: 0, failed: 0 };
         }
 
         const allItems = await queueStore.getAll();
-        const items = allItems
-            .slice()
-            .sort(function (a, b) {
-                return (a.id || 0) - (b.id || 0);
-            });
+        const items = allItems.slice().sort(function (a, b) {
+            return (a.id || 0) - (b.id || 0);
+        });
 
         let synced = 0;
         let failed = 0;
@@ -286,8 +411,13 @@
                     headers: {
                         "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
                     },
-                    credentials: "same-origin"
+                    credentials: "same-origin",
+                    redirect: "follow"
                 });
+
+                if (isLoginResponse(response)) {
+                    throw new Error("Session expired. Login once online to continue sync.");
+                }
 
                 if (!response.ok) {
                     throw new Error("HTTP " + response.status);
@@ -333,11 +463,9 @@
         }
 
         const items = await queueStore.getAll();
-        const sortedItems = items
-            .slice()
-            .sort(function (a, b) {
-                return (a.id || 0) - (b.id || 0);
-            });
+        const sortedItems = items.slice().sort(function (a, b) {
+            return (a.id || 0) - (b.id || 0);
+        });
 
         if (countElement) {
             countElement.textContent = sortedItems.length + " pending";
@@ -363,7 +491,7 @@
 
             const title = document.createElement("div");
             title.className = "fw-semibold";
-            title.textContent = item.entityType || "OfflineSubmission";
+            title.textContent = (item.entityType || "OfflineSubmission") + " (" + (item.entityClientUuid || "-") + ")";
 
             const meta = document.createElement("div");
             meta.className = "small text-muted";
@@ -473,11 +601,10 @@
             const offlineEnabled = form.dataset.offlineEnabled === "true";
             if (offlineEnabled && !navigator.onLine) {
                 event.preventDefault();
-
                 try {
                     await queueFormSubmission(form);
                     form.dataset.geoReady = "false";
-                    setOfflineStatus(form, "Saved offline on this device. It will sync automatically when internet is available.", false);
+                    setOfflineStatus(form, "Saved offline in IndexedDB. It will sync automatically when internet is available.", false);
                     await refreshQueueWidgets();
                 } catch {
                     setOfflineStatus(form, "Unable to save locally. Reconnect internet and submit again.", true);
@@ -544,6 +671,12 @@
     }
 
     document.addEventListener("DOMContentLoaded", async function () {
+        initializeInstallPrompt();
+        rememberAuthenticatedLocation();
+        if (tryRecoverFromOfflineLoginRedirect()) {
+            return;
+        }
+
         initializeForms();
         initializeSyncButton();
         initializeNetworkHandlers();

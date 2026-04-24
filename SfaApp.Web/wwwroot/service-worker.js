@@ -1,6 +1,6 @@
-const CACHE_NAME = "sfa-mobile-shell-v1";
+const CACHE_NAME = "sfa-mobile-shell-v2";
+const LAST_MOBILE_PAGE_KEY = "/mobile-offline-last-page";
 const SHELL_ASSETS = [
-    "/mobile",
     "/css/site.css",
     "/lib/bootstrap/dist/css/bootstrap.min.css",
     "/lib/bootstrap/dist/js/bootstrap.bundle.min.js",
@@ -9,6 +9,15 @@ const SHELL_ASSETS = [
     "/offline.html",
     "/favicon.ico"
 ];
+
+function isMobilePath(pathname) {
+    return pathname.toLowerCase().startsWith("/mobile");
+}
+
+function isLoginPath(pathname) {
+    const normalized = pathname.toLowerCase();
+    return normalized.includes("/mobile/agent/login") || normalized.includes("/identity/account/login");
+}
 
 self.addEventListener("install", (event) => {
     event.waitUntil(
@@ -39,24 +48,35 @@ self.addEventListener("fetch", (event) => {
     if (request.mode === "navigate") {
         event.respondWith(
             fetch(request)
-                .then((response) => {
+                .then(async (response) => {
                     if (response && response.ok) {
+                        const requestUrl = new URL(request.url);
+                        const responseUrl = new URL(response.url);
                         const responseClone = response.clone();
-                        caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone)).catch(() => Promise.resolve());
+                        const cache = await caches.open(CACHE_NAME);
+
+                        await cache.put(request, responseClone);
+
+                        if (isMobilePath(requestUrl.pathname) && !isLoginPath(responseUrl.pathname)) {
+                            await cache.put(LAST_MOBILE_PAGE_KEY, response.clone());
+                        }
                     }
 
                     return response;
                 })
                 .catch(async () => {
+                    const requestUrl = new URL(request.url);
                     const cache = await caches.open(CACHE_NAME);
                     const cachedNavigation = await cache.match(request);
                     if (cachedNavigation) {
                         return cachedNavigation;
                     }
 
-                    const cachedMobile = await cache.match("/mobile");
-                    if (cachedMobile) {
-                        return cachedMobile;
+                    if (isMobilePath(requestUrl.pathname)) {
+                        const cachedLastMobilePage = await cache.match(LAST_MOBILE_PAGE_KEY);
+                        if (cachedLastMobilePage) {
+                            return cachedLastMobilePage;
+                        }
                     }
 
                     return cache.match("/offline.html");
