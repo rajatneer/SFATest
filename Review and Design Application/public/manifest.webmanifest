@@ -1,0 +1,10 @@
+{
+  "name": "SFA Mobile",
+  "short_name": "SFA",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0B5FFF",
+  "description": "Sales Force Automation PWA frontend"
+}

@@ -6,6 +6,8 @@ public class MobileDashboardViewModel
 {
     public DaySession? ActiveSession { get; set; }
     public string? ActiveRouteName { get; set; }
+    public string? StartDayCheckInDisplay { get; set; }
+    public string? EndDayCheckOutDisplay { get; set; }
     public int PendingSyncCount { get; set; }
     public int VisitedCustomers { get; set; }
     public int OrdersCreated { get; set; }

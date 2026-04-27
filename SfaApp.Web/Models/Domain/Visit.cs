@@ -32,6 +32,11 @@ public class Visit
     public decimal? CheckinLat { get; set; }
     public decimal? CheckinLong { get; set; }
 
+    [StringLength(100)]
+    public string? CheckinTimeZoneId { get; set; }
+
+    public int? CheckinUtcOffsetMinutes { get; set; }
+
     public decimal? CustomerRefLat { get; set; }
     public decimal? CustomerRefLong { get; set; }
     public decimal? GeoDistanceMeters { get; set; }
@@ -41,6 +46,11 @@ public class Visit
     public DateTime? CheckoutTimestampUtc { get; set; }
     public decimal? CheckoutLat { get; set; }
     public decimal? CheckoutLong { get; set; }
+
+    [StringLength(100)]
+    public string? CheckoutTimeZoneId { get; set; }
+
+    public int? CheckoutUtcOffsetMinutes { get; set; }
 
     public VisitStatus VisitStatus { get; set; } = VisitStatus.Completed;
 

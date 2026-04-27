@@ -115,12 +115,24 @@ public class AgentController : Controller
         }
 
         var session = await _mobileWorkflowService.GetActiveSessionAsync(userId);
+        var todaySession = await _dbContext.DaySessions
+            .Where(x => x.RepUserId == userId && x.BusinessDate == DateOnly.FromDateTime(DateTime.UtcNow))
+            .OrderByDescending(x => x.StartDayTimestampUtc)
+            .FirstOrDefaultAsync();
         var pendingQueue = await _mobileWorkflowService.GetPendingQueueAsync();
 
         var model = new MobileDashboardViewModel
         {
             ActiveSession = session,
             ActiveRouteName = session?.SelectedRoute?.RouteName,
+            StartDayCheckInDisplay = FormatClientTime(
+                todaySession?.StartDayTimestampUtc,
+                todaySession?.StartDayTimeZoneId,
+                todaySession?.StartDayUtcOffsetMinutes),
+            EndDayCheckOutDisplay = FormatClientTime(
+                todaySession?.EndDayTimestampUtc,
+                todaySession?.EndDayTimeZoneId,
+                todaySession?.EndDayUtcOffsetMinutes),
             PendingSyncCount = pendingQueue.Count,
             VisitedCustomers = await _dbContext.Visits.CountAsync(x => x.RepUserId == userId && x.VisitDate == DateOnly.FromDateTime(DateTime.UtcNow)),
             OrdersCreated = await _dbContext.SalesOrders.CountAsync(x => x.RepUserId == userId && x.OrderDateUtc.Date == DateTime.UtcNow.Date)
@@ -132,7 +144,11 @@ public class AgentController : Controller
     [HttpPost]
     [Authorize(Roles = "SalesRep")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> StartDay(decimal startLat = 0, decimal startLong = 0)
+    public async Task<IActionResult> StartDay(
+        decimal startLat = 0,
+        decimal startLong = 0,
+        string? startTimeZoneId = null,
+        int? startUtcOffsetMinutes = null)
     {
         var userId = _userManager.GetUserId(User);
         if (string.IsNullOrWhiteSpace(userId))
@@ -142,7 +158,7 @@ public class AgentController : Controller
 
         try
         {
-            await _mobileWorkflowService.StartDayAsync(userId, startLat, startLong);
+            await _mobileWorkflowService.StartDayAsync(userId, startLat, startLong, startTimeZoneId, startUtcOffsetMinutes);
             TempData["SuccessMessage"] = "Day started.";
         }
         catch (InvalidOperationException ex)
@@ -162,7 +178,11 @@ public class AgentController : Controller
     [HttpPost]
     [Authorize(Roles = "SalesRep")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> EndDay(decimal endLat = 0, decimal endLong = 0)
+    public async Task<IActionResult> EndDay(
+        decimal endLat = 0,
+        decimal endLong = 0,
+        string? endTimeZoneId = null,
+        int? endUtcOffsetMinutes = null)
     {
         var userId = _userManager.GetUserId(User);
         if (string.IsNullOrWhiteSpace(userId))
@@ -172,7 +192,7 @@ public class AgentController : Controller
 
         try
         {
-            await _mobileWorkflowService.EndDayAsync(userId, endLat, endLong);
+            await _mobileWorkflowService.EndDayAsync(userId, endLat, endLong, endTimeZoneId, endUtcOffsetMinutes);
             TempData["SuccessMessage"] = "Day ended.";
         }
         catch (InvalidOperationException ex)
@@ -391,6 +411,8 @@ public class AgentController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> OrderCreation(CreateMobileOrderViewModel model)
     {
+        EnsureAtLeastOneOrderLine(model);
+
         if (!ModelState.IsValid)
         {
             await PopulateProductOptionsAsync();
@@ -446,5 +468,59 @@ public class AgentController : Controller
     {
         var products = await _dbContext.Products.Where(x => x.IsActive).OrderBy(x => x.Name).ToListAsync();
         ViewBag.ProductOptions = new SelectList(products, nameof(Product.Id), nameof(Product.Name));
+    }
+
+    private static void EnsureAtLeastOneOrderLine(CreateMobileOrderViewModel model)
+    {
+        model.OrderLines ??= [];
+        if (model.OrderLines.Count == 0)
+        {
+            model.OrderLines.Add(new CreateMobileOrderLineViewModel());
+        }
+    }
+
+    private string? FormatClientTime(DateTime? utcTimestamp, string? timeZoneId, int? utcOffsetMinutes)
+    {
+        if (!utcTimestamp.HasValue)
+        {
+            return null;
+        }
+
+        var utcValue = DateTime.SpecifyKind(utcTimestamp.Value, DateTimeKind.Utc);
+        if (!string.IsNullOrWhiteSpace(timeZoneId))
+        {
+            try
+            {
+                var timezone = TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
+                var localValue = TimeZoneInfo.ConvertTimeFromUtc(utcValue, timezone);
+                return $"{localValue:dd-MMM HH:mm} ({timezone.Id})";
+            }
+            catch (TimeZoneNotFoundException ex)
+            {
+                _logger.LogWarning(ex, "Unknown timezone id {TimeZoneId} while formatting dashboard time", timeZoneId);
+            }
+            catch (InvalidTimeZoneException ex)
+            {
+                _logger.LogWarning(ex, "Invalid timezone id {TimeZoneId} while formatting dashboard time", timeZoneId);
+            }
+        }
+
+        if (utcOffsetMinutes.HasValue)
+        {
+            var localByOffset = utcValue.AddMinutes(-utcOffsetMinutes.Value);
+            return $"{localByOffset:dd-MMM HH:mm} (UTC{FormatOffset(utcOffsetMinutes.Value)})";
+        }
+
+        return $"{utcValue:dd-MMM HH:mm} (UTC)";
+    }
+
+    private static string FormatOffset(int utcOffsetMinutes)
+    {
+        var total = -utcOffsetMinutes;
+        var sign = total >= 0 ? "+" : "-";
+        var absolute = Math.Abs(total);
+        var hours = absolute / 60;
+        var minutes = absolute % 60;
+        return $"{sign}{hours:00}:{minutes:00}";
     }
 }

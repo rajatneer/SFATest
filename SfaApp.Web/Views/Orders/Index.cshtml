@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = "Orders";
+    var canManageFulfillment = ViewBag.CanManageFulfillment as bool? == true;
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -21,20 +22,51 @@
                 <tr>
                     <th>Order #</th>
                     <th>Customer</th>
+                    <th>Route</th>
+                    <th>Distributor</th>
                     <th>Date (UTC)</th>
                     <th>Status</th>
                     <th>Total</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody>
             @foreach (var item in Model)
             {
+                var nextStatus = item.Status switch
+                {
+                    OrderStatus.Approved => OrderStatus.Accepted,
+                    OrderStatus.Created => OrderStatus.Accepted,
+                    OrderStatus.Accepted => OrderStatus.Dispatched,
+                    OrderStatus.Dispatched => OrderStatus.Delivered,
+                    _ => (OrderStatus?)null
+                };
+
                 <tr>
                     <td>@item.OrderNumber</td>
                     <td>@item.Customer?.Name</td>
+                    <td>@(item.Route?.RouteName ?? "-")</td>
+                    <td>@(item.Distributor?.DistributorName ?? "-")</td>
                     <td>@item.OrderDateUtc.ToString("dd-MMM-yyyy HH:mm")</td>
                     <td><span class="badge bg-info text-dark">@item.Status</span></td>
                     <td>@item.TotalAmount.ToString("N2")</td>
+                    <td>
+                        @if (canManageFulfillment && nextStatus.HasValue)
+                        {
+                            <form asp-action="UpdateFulfillmentStatus" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <input type="hidden" name="status" value="@nextStatus.Value" />
+                                <button type="submit" class="btn btn-sm btn-outline-primary">
+                                    Mark @nextStatus.Value
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <span class="text-muted">-</span>
+                        }
+                    </td>
                 </tr>
             }
             </tbody>

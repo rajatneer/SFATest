@@ -18,4 +18,8 @@ public class CreateAppUserViewModel
 
     [Required]
     public string RoleName { get; set; } = "SalesRep";
+
+    public string? ManagerUserId { get; set; }
+
+    public int? DistributorId { get; set; }
 }

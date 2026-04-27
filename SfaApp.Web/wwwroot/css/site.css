@@ -456,3 +456,418 @@ a {
     border: none;
   }
 }
+
+.sfa-login-shell {
+  min-height: 100vh;
+  display: flex;
+  background: #f3f4f6;
+}
+
+.sfa-login-left-pane {
+  width: 50%;
+  min-height: 100vh;
+  color: #ffffff;
+  padding: 2.75rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(145deg, #1f3ea8 0%, #2041bc 48%, #2448d0 100%);
+}
+
+.sfa-login-left-orbits {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.23;
+  background:
+    radial-gradient(circle at center, transparent 0 52px, rgba(255, 255, 255, 0.2) 53px 54px, transparent 55px),
+    radial-gradient(circle at center, transparent 0 114px, rgba(255, 255, 255, 0.17) 115px 116px, transparent 117px),
+    radial-gradient(circle at center, transparent 0 176px, rgba(255, 255, 255, 0.16) 177px 178px, transparent 179px),
+    radial-gradient(circle at center, transparent 0 238px, rgba(255, 255, 255, 0.15) 239px 240px, transparent 241px),
+    radial-gradient(circle at center, transparent 0 300px, rgba(255, 255, 255, 0.14) 301px 302px, transparent 303px),
+    radial-gradient(circle at center, transparent 0 362px, rgba(255, 255, 255, 0.13) 363px 364px, transparent 365px);
+}
+
+.sfa-login-left-top,
+.sfa-login-left-middle,
+.sfa-login-left-footer {
+  position: relative;
+  z-index: 1;
+}
+
+.sfa-login-left-top {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.sfa-login-brand-mark {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.24);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+.sfa-login-brand-title {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.05;
+}
+
+.sfa-login-brand-subtitle {
+  margin-top: 0.2rem;
+  font-size: 1rem;
+  color: #c8d5ff;
+}
+
+.sfa-login-left-heading {
+  margin: 0 0 1.8rem;
+  font-size: clamp(2.1rem, 3.8vw, 3.35rem);
+  line-height: 1.14;
+  color: #ffffff;
+  font-family: "Space Grotesk", "Segoe UI", Tahoma, sans-serif;
+  font-weight: 700;
+}
+
+.sfa-login-feature-list {
+  display: grid;
+  gap: 1.05rem;
+}
+
+.sfa-login-feature-item {
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  gap: 0.85rem;
+  align-items: start;
+}
+
+.sfa-login-feature-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.21);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: #ffffff;
+}
+
+.sfa-login-feature-title {
+  font-size: 1.22rem;
+  font-weight: 700;
+  line-height: 1.15;
+  color: #ffffff;
+}
+
+.sfa-login-feature-description {
+  margin-top: 0.26rem;
+  font-size: 1.01rem;
+  line-height: 1.25;
+  color: #d6e1ff;
+}
+
+.sfa-login-left-footer {
+  font-size: 0.92rem;
+  color: #c7d5ff;
+}
+
+.sfa-login-right-pane {
+  flex: 1;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+}
+
+.sfa-login-right-inner {
+  width: 100%;
+  max-width: 510px;
+}
+
+.sfa-login-mobile-brand {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.sfa-login-brand-title-mobile {
+  color: #101432;
+  font-size: 1.24rem;
+  font-weight: 800;
+}
+
+.sfa-login-card {
+  background: #ffffff;
+  border: 1px solid #e6e7ee;
+  border-radius: 18px;
+  box-shadow: 0 18px 40px -30px rgba(20, 29, 66, 0.6);
+  padding: 2rem;
+}
+
+.sfa-login-card-title {
+  margin: 0;
+  font-family: "Space Grotesk", "Segoe UI", Tahoma, sans-serif;
+  font-size: 2rem;
+  line-height: 1.1;
+  color: #0d1a3a;
+}
+
+.sfa-login-card-subtitle {
+  margin: 0.45rem 0 1.25rem;
+  color: #6e7690;
+  font-size: 1rem;
+}
+
+.sfa-login-form {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.sfa-login-error {
+  margin: 0;
+  padding: 0.74rem 0.86rem;
+  border-radius: 10px;
+  background: #fff3f3;
+  border: 1px solid #f5c3c3;
+  color: #a13232;
+  font-size: 0.86rem;
+}
+
+.sfa-login-field-wrap {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.sfa-login-label {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1f2a4d;
+}
+
+.sfa-login-input {
+  border-radius: 12px;
+  border: 1px solid #d6dae6;
+  padding: 0.82rem 0.95rem;
+  background: #f8f9fc;
+  color: #1f2a4d;
+  width: 100%;
+}
+
+.sfa-login-input::placeholder {
+  color: #8e96b0;
+}
+
+.sfa-login-input:focus {
+  outline: none;
+  border-color: #6b8bff;
+  box-shadow: 0 0 0 0.2rem rgba(80, 114, 255, 0.2);
+}
+
+.sfa-login-password-wrap {
+  position: relative;
+}
+
+.sfa-login-password-input {
+  padding-right: 4rem;
+}
+
+.sfa-login-password-toggle {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #6f7891;
+  padding: 0.34rem 0.45rem;
+}
+
+.sfa-login-password-toggle:hover {
+  color: #2d57d0;
+}
+
+.sfa-login-submit {
+  border: none;
+  border-radius: 14px;
+  padding: 0.92rem 1rem;
+  background: #245fe4;
+  color: #ffffff;
+  font-size: 1.35rem;
+  font-weight: 700;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.sfa-login-submit:hover {
+  background: #1f53ca;
+  transform: translateY(-1px);
+}
+
+.sfa-login-help-text {
+  margin: 0.1rem 0 0;
+  text-align: center;
+  color: #848cab;
+  font-size: 0.92rem;
+}
+
+.sfa-login-divider {
+  margin: 1.35rem 0 0.82rem;
+  text-align: center;
+  color: #9299af;
+  font-size: 0.85rem;
+  position: relative;
+}
+
+.sfa-login-divider::before,
+.sfa-login-divider::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 36%;
+  border-top: 1px solid #e6e7ee;
+}
+
+.sfa-login-divider::before {
+  left: 0;
+}
+
+.sfa-login-divider::after {
+  right: 0;
+}
+
+.sfa-login-demo-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem;
+}
+
+.sfa-login-demo-btn {
+  border-radius: 12px;
+  border: 1px solid transparent;
+  padding: 0.72rem 0.86rem;
+  text-align: left;
+  font-size: 0.95rem;
+  font-weight: 700;
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.sfa-login-demo-btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(0.97);
+}
+
+.sfa-login-demo-btn.is-admin {
+  background: #ece8ff;
+  border-color: #d6cffc;
+  color: #4f3ac8;
+}
+
+.sfa-login-demo-btn.is-tsi {
+  background: #eaf2ff;
+  border-color: #cbddff;
+  color: #1f62d2;
+}
+
+.sfa-login-demo-btn.is-rep {
+  background: #e4f6ea;
+  border-color: #bde6cc;
+  color: #127a42;
+}
+
+.sfa-login-demo-btn.is-dist {
+  background: #fff1e2;
+  border-color: #f3d8b5;
+  color: #cc5e00;
+}
+
+.sfa-login-links {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.8rem;
+  margin-top: 1rem;
+  font-size: 0.86rem;
+}
+
+.sfa-login-links a {
+  color: #3a5db3;
+  font-weight: 700;
+}
+
+.sfa-login-links a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 1199.98px) {
+  .sfa-login-left-pane {
+    width: 46%;
+    padding: 2.2rem;
+  }
+
+  .sfa-login-feature-title {
+    font-size: 1.08rem;
+  }
+
+  .sfa-login-feature-description {
+    font-size: 0.92rem;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .sfa-login-shell {
+    display: block;
+  }
+
+  .sfa-login-left-pane {
+    display: none;
+  }
+
+  .sfa-login-right-pane {
+    min-height: 100vh;
+    padding: 1rem;
+  }
+
+  .sfa-login-mobile-brand {
+    display: flex;
+  }
+
+  .sfa-login-card {
+    padding: 1.35rem;
+    border-radius: 16px;
+  }
+
+  .sfa-login-card-title {
+    font-size: 1.55rem;
+  }
+
+  .sfa-login-submit {
+    font-size: 1.2rem;
+  }
+
+  .sfa-login-links {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .sfa-login-demo-grid {
+    grid-template-columns: 1fr;
+  }
+}

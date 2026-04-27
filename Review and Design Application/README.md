@@ -7,5 +7,19 @@
 
   Run `npm i` to install the dependencies.
 
+  Create environment file for API integration:
+
+  ```powershell
+  Copy-Item .env.example .env
+  ```
+
   Run `npm run dev` to start the development server.
+
+  ## PWA + Offline Queue
+
+  This app now includes:
+  - Service worker registration (`public/sw.js`)
+  - Web manifest (`public/manifest.webmanifest`)
+  - IndexedDB sync queue powered by Dexie
+  - Sync push to REST API endpoint `/api/mobile/sync/push`
   

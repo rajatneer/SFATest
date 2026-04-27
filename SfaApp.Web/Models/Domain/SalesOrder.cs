@@ -31,6 +31,11 @@ public class SalesOrder
 
     public DateTime OrderDateUtc { get; set; } = DateTime.UtcNow;
 
+    [StringLength(100)]
+    public string? TimeZoneId { get; set; }
+
+    public int? UtcOffsetMinutes { get; set; }
+
     public OrderStatus Status { get; set; } = OrderStatus.PendingApproval;
 
     public decimal TotalAmount { get; set; }

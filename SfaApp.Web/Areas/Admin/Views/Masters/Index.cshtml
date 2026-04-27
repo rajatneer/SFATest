@@ -9,7 +9,7 @@
     <p class="sfa-page-subtitle">Territories, distributors and routes for setup admin UI.</p>
 
     <div class="row g-3">
-    <div class="col-lg-4">
+    <div class="col-lg-6 col-xl-3">
         <div class="sfa-soft-block h-100">
             <div class="sfa-section-title">Add Territory</div>
                 <form asp-area="Admin" asp-controller="Masters" asp-action="CreateTerritory" method="post">
@@ -19,7 +19,7 @@
                 </form>
         </div>
     </div>
-    <div class="col-lg-4">
+    <div class="col-lg-6 col-xl-3">
         <div class="sfa-soft-block h-100">
             <div class="sfa-section-title">Add Distributor</div>
                 <form asp-area="Admin" asp-controller="Masters" asp-action="CreateDistributor" method="post">
@@ -29,7 +29,7 @@
                 </form>
         </div>
     </div>
-    <div class="col-lg-4">
+    <div class="col-lg-6 col-xl-3">
         <div class="sfa-soft-block h-100">
             <div class="sfa-section-title">Add Route</div>
                 <form asp-area="Admin" asp-controller="Masters" asp-action="CreateRoute" method="post">
@@ -41,13 +41,40 @@
                 </form>
         </div>
     </div>
+    <div class="col-lg-6 col-xl-3">
+        <div class="sfa-soft-block h-100">
+            <div class="sfa-section-title">Assign Route To Sales Rep</div>
+                <form asp-area="Admin" asp-controller="Masters" asp-action="CreateRouteAssignment" method="post">
+                    <div class="mb-2">
+                        <select class="form-select" name="routeId" required>
+                            <option value="">Select Route</option>
+                            @foreach (var route in Model.Routes)
+                            {
+                                <option value="@route.Id">@route.RouteCode - @route.RouteName</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <select class="form-select" name="repUserId" required>
+                            <option value="">Select Sales Rep</option>
+                            @foreach (var rep in Model.SalesReps)
+                            {
+                                <option value="@rep.Value">@rep.Text</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-2"><input class="form-control" type="date" name="startDate" /></div>
+                    <button class="sfa-btn sfa-btn-primary" type="submit">Save Assignment</button>
+                </form>
+        </div>
+    </div>
 </div>
 
 </section>
 
 <section class="sfa-panel p-3 p-md-4">
 <div class="row g-3">
-    <div class="col-lg-4">
+    <div class="col-lg-6 col-xl-3">
         <div class="sfa-soft-block">
             <div class="sfa-section-title">Territories</div>
             <ul class="list-group list-group-flush">
@@ -58,7 +85,7 @@
             </ul>
         </div>
     </div>
-    <div class="col-lg-4">
+    <div class="col-lg-6 col-xl-3">
         <div class="sfa-soft-block">
             <div class="sfa-section-title">Distributors</div>
             <ul class="list-group list-group-flush">
@@ -69,13 +96,31 @@
             </ul>
         </div>
     </div>
-    <div class="col-lg-4">
+    <div class="col-lg-6 col-xl-3">
         <div class="sfa-soft-block">
             <div class="sfa-section-title">Routes</div>
             <ul class="list-group list-group-flush">
                 @foreach (var r in Model.Routes)
                 {
                     <li class="list-group-item">@r.RouteCode - @r.RouteName <small class="text-muted">(@r.Territory?.TerritoryName / @r.Distributor?.DistributorName)</small></li>
+                }
+            </ul>
+        </div>
+    </div>
+    <div class="col-lg-6 col-xl-3">
+        <div class="sfa-soft-block">
+            <div class="sfa-section-title">Active Route Assignments</div>
+            <ul class="list-group list-group-flush">
+                @if (!Model.ActiveRouteAssignments.Any())
+                {
+                    <li class="list-group-item text-muted">No active route assignments found.</li>
+                }
+                else
+                {
+                    @foreach (var assignment in Model.ActiveRouteAssignments)
+                    {
+                        <li class="list-group-item">@assignment.RouteName - @assignment.RepName <small class="text-muted">(Start: @assignment.StartDate.ToString("dd-MMM-yyyy"))</small></li>
+                    }
                 }
             </ul>
         </div>

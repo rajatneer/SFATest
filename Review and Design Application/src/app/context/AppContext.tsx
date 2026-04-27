@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { pushSyncItems } from '../api/client';
+import { loadSyncQueueItems, upsertSyncQueueItems } from '../offline/syncQueueStore';
 import {
   User, DaySession, Visit, Order, Route, OrderStatus,
   users, routes, routeAssignments, customers, products,
@@ -93,6 +95,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   });
 
   const [syncQueue, setSyncQueue] = useState<SyncQueueItem[]>([]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    loadSyncQueueItems()
+      .then((items) => {
+        if (isMounted) {
+          setSyncQueue(items);
+        }
+      })
+      .catch((error) => {
+        console.error('Failed to load sync queue from IndexedDB', error);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Persist to localStorage
   useEffect(() => {
@@ -266,15 +286,73 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       status: 'pending',
       retry_count: 0,
     };
-    setSyncQueue(prev => [...prev, item]);
+
+    setSyncQueue(prev => {
+      const updated = [...prev, item];
+      upsertSyncQueueItems([item]).catch((error) => {
+        console.error('Failed to persist sync queue item', error);
+      });
+      return updated;
+    });
   };
 
   const syncPending = async () => {
-    setSyncQueue(prev => prev.map(i => i.status === 'pending' ? { ...i, status: 'syncing' } : i));
-    await new Promise(r => setTimeout(r, 1500));
-    setSyncQueue(prev => prev.map(i => i.status === 'syncing' ? { ...i, status: 'synced' } : i));
-    setOrders(prev => prev.map(o => o.sync_status === 'pending' ? { ...o, sync_status: 'synced', status: 'Synced' as OrderStatus } : o));
-    setVisits(prev => prev.map(v => v.sync_status === 'pending' ? { ...v, sync_status: 'synced' } : v));
+    const itemsToSync = syncQueue.filter((item) => item.status === 'pending' || item.status === 'failed');
+    if (itemsToSync.length === 0) {
+      return;
+    }
+
+    const syncIds = new Set(itemsToSync.map((item) => item.id));
+    const syncingItems = itemsToSync.map((item) => ({ ...item, status: 'syncing' as const, error: undefined }));
+
+    setSyncQueue((prev) => {
+      const updated = prev.map((item) =>
+        syncIds.has(item.id)
+          ? { ...item, status: 'syncing' as const, error: undefined }
+          : item
+      );
+      upsertSyncQueueItems(updated).catch((error) => {
+        console.error('Failed to persist syncing state', error);
+      });
+      return updated;
+    });
+
+    try {
+      await pushSyncItems(syncingItems);
+
+      setSyncQueue((prev) => {
+        const updated = prev.map((item) =>
+          syncIds.has(item.id)
+            ? { ...item, status: 'synced' as const, error: undefined }
+            : item
+        );
+        upsertSyncQueueItems(updated).catch((error) => {
+          console.error('Failed to persist synced state', error);
+        });
+        return updated;
+      });
+
+      setOrders(prev => prev.map(o => o.sync_status === 'pending' ? { ...o, sync_status: 'synced', status: 'Synced' as OrderStatus } : o));
+      setVisits(prev => prev.map(v => v.sync_status === 'pending' ? { ...v, sync_status: 'synced' } : v));
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Sync failed.';
+      setSyncQueue((prev) => {
+        const updated = prev.map((item) =>
+          syncIds.has(item.id)
+            ? {
+                ...item,
+                status: 'failed' as const,
+                error: errorMessage,
+                retry_count: item.retry_count + 1
+              }
+            : item
+        );
+        upsertSyncQueueItems(updated).catch((persistError) => {
+          console.error('Failed to persist failed sync state', persistError);
+        });
+        return updated;
+      });
+    }
   };
 
   const getAssignedRoutes = (userId: number): Route[] => {

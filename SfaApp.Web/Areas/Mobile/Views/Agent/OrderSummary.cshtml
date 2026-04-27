@@ -24,7 +24,7 @@
             {
                 <tr>
                     <td>@line.Product?.Name</td>
-                    <td>@line.Quantity</td>
+                    <td>@line.Quantity.ToString("N2")</td>
                     <td>@line.LineTotal.ToString("N2")</td>
                 </tr>
             }

@@ -97,7 +97,12 @@ public class MobileWorkflowService : IMobileWorkflowService
         }
     }
 
-    public async Task<DaySession> StartDayAsync(string repUserId, decimal startLat, decimal startLong)
+    public async Task<DaySession> StartDayAsync(
+        string repUserId,
+        decimal startLat,
+        decimal startLong,
+        string? startTimeZoneId,
+        int? startUtcOffsetMinutes)
     {
         await using var transaction = await _dbContext.Database.BeginTransactionAsync();
 
@@ -118,6 +123,8 @@ public class MobileWorkflowService : IMobileWorkflowService
                 StartDayTimestampUtc = DateTime.UtcNow,
                 StartDayLat = startLat,
                 StartDayLong = startLong,
+                StartDayTimeZoneId = NormalizeTimeZoneId(startTimeZoneId),
+                StartDayUtcOffsetMinutes = startUtcOffsetMinutes,
                 Status = DaySessionStatus.Started,
                 SyncStatus = SyncStatus.Pending
             };
@@ -133,6 +140,8 @@ public class MobileWorkflowService : IMobileWorkflowService
                     daySession.StartDayTimestampUtc,
                     daySession.StartDayLat,
                     daySession.StartDayLong,
+                    daySession.StartDayTimeZoneId,
+                    daySession.StartDayUtcOffsetMinutes,
                     daySession.Status
                 },
                 cancellationToken: default);
@@ -194,7 +203,11 @@ public class MobileWorkflowService : IMobileWorkflowService
                     session.RepUserId,
                     session.BusinessDate,
                     session.StartDayTimestampUtc,
+                    session.StartDayTimeZoneId,
+                    session.StartDayUtcOffsetMinutes,
                     session.EndDayTimestampUtc,
+                    session.EndDayTimeZoneId,
+                    session.EndDayUtcOffsetMinutes,
                     session.SelectedRouteId,
                     session.Status
                 },
@@ -284,6 +297,8 @@ public class MobileWorkflowService : IMobileWorkflowService
                 CheckinTimestampUtc = DateTime.UtcNow,
                 CheckinLat = model.DeviceLat,
                 CheckinLong = model.DeviceLong,
+                CheckinTimeZoneId = NormalizeTimeZoneId(model.TimeZoneId),
+                CheckinUtcOffsetMinutes = model.UtcOffsetMinutes,
                 CustomerRefLat = customer.Latitude,
                 CustomerRefLong = customer.Longitude,
                 GeoDistanceMeters = distanceMeters,
@@ -310,6 +325,8 @@ public class MobileWorkflowService : IMobileWorkflowService
                     visit.CheckinTimestampUtc,
                     visit.CheckinLat,
                     visit.CheckinLong,
+                    visit.CheckinTimeZoneId,
+                    visit.CheckinUtcOffsetMinutes,
                     visit.VisitStatus,
                     visit.Outcome
                 },
@@ -358,6 +375,8 @@ public class MobileWorkflowService : IMobileWorkflowService
             visit.CheckoutTimestampUtc = DateTime.UtcNow;
             visit.CheckoutLat = model.CheckoutLat;
             visit.CheckoutLong = model.CheckoutLong;
+            visit.CheckoutTimeZoneId = NormalizeTimeZoneId(model.TimeZoneId);
+            visit.CheckoutUtcOffsetMinutes = model.UtcOffsetMinutes;
             visit.Notes = model.VisitNotes;
             visit.VisitStatus = model.VisitStatus;
             visit.Outcome = model.VisitStatus.ToString();
@@ -377,6 +396,8 @@ public class MobileWorkflowService : IMobileWorkflowService
                     visit.CheckoutTimestampUtc,
                     visit.CheckoutLat,
                     visit.CheckoutLong,
+                    visit.CheckoutTimeZoneId,
+                    visit.CheckoutUtcOffsetMinutes,
                     visit.VisitStatus,
                     visit.Outcome,
                     visit.Notes
@@ -433,11 +454,33 @@ public class MobileWorkflowService : IMobileWorkflowService
                 throw new InvalidOperationException("Customer is outside selected route.");
             }
 
-            var product = await _dbContext.Products.FirstOrDefaultAsync(x => x.Id == model.ProductId && x.IsActive);
-            if (product is null)
+            var orderLineSource = model.OrderLines ?? [];
+            var orderLines = orderLineSource
+                .Where(x => x.ProductId > 0 && x.Quantity > 0)
+                .GroupBy(x => x.ProductId)
+                .Select(group => new
+                {
+                    ProductId = group.Key,
+                    Quantity = group.Sum(line => line.Quantity)
+                })
+                .ToList();
+
+            if (orderLines.Count == 0)
             {
-                throw new InvalidOperationException("Product not found.");
+                throw new InvalidOperationException("At least one valid order line is required.");
             }
+
+            var productIds = orderLines.Select(x => x.ProductId).ToList();
+            var products = await _dbContext.Products
+                .Where(x => productIds.Contains(x.Id) && x.IsActive)
+                .ToListAsync();
+
+            if (products.Count != productIds.Count)
+            {
+                throw new InvalidOperationException("One or more selected products are invalid or inactive.");
+            }
+
+            var productById = products.ToDictionary(x => x.Id);
 
             var route = await _dbContext.SalesRoutes.FirstOrDefaultAsync(x => x.Id == session.SelectedRouteId);
             if (route is null)
@@ -445,11 +488,31 @@ public class MobileWorkflowService : IMobileWorkflowService
                 throw new InvalidOperationException("Selected route is invalid.");
             }
 
-            var lineTotal = model.Quantity * product.UnitPrice;
+            var lineEntities = new List<SalesOrderLine>();
+            foreach (var orderLine in orderLines)
+            {
+                if (!productById.TryGetValue(orderLine.ProductId, out var mappedProduct))
+                {
+                    throw new InvalidOperationException("One or more selected products are invalid or inactive.");
+                }
+
+                var currentLineTotal = orderLine.Quantity * mappedProduct.UnitPrice;
+                lineEntities.Add(new SalesOrderLine
+                {
+                    ProductId = mappedProduct.Id,
+                    Quantity = orderLine.Quantity,
+                    UnitPrice = mappedProduct.UnitPrice,
+                    LineTotal = currentLineTotal
+                });
+            }
+
+            var orderTotal = lineEntities.Sum(x => x.LineTotal);
             var order = new SalesOrder
             {
                 OrderNumber = $"ORD-{DateTime.UtcNow:yyyyMMddHHmmssfff}",
                 OrderDateUtc = DateTime.UtcNow,
+                TimeZoneId = NormalizeTimeZoneId(model.TimeZoneId),
+                UtcOffsetMinutes = model.UtcOffsetMinutes,
                 DaySessionId = session.Id,
                 RouteId = route.Id,
                 DistributorId = route.DistributorId,
@@ -457,21 +520,12 @@ public class MobileWorkflowService : IMobileWorkflowService
                 CustomerId = customer.Id,
                 VisitId = model.VisitId,
                 Status = OrderStatus.Created,
-                TotalAmount = lineTotal,
-                GrossAmount = lineTotal,
-                NetAmount = lineTotal,
+                TotalAmount = orderTotal,
+                GrossAmount = orderTotal,
+                NetAmount = orderTotal,
                 Source = "pwa",
                 SyncStatus = SyncStatus.Pending,
-                Lines =
-                [
-                    new SalesOrderLine
-                    {
-                        ProductId = product.Id,
-                        Quantity = model.Quantity,
-                        UnitPrice = product.UnitPrice,
-                        LineTotal = lineTotal
-                    }
-                ]
+                Lines = lineEntities
             };
 
             _dbContext.SalesOrders.Add(order);
@@ -493,8 +547,15 @@ public class MobileWorkflowService : IMobileWorkflowService
                     order.NetAmount,
                     order.Status,
                     order.Source,
-                    ProductId = model.ProductId,
-                    model.Quantity
+                    order.TimeZoneId,
+                    order.UtcOffsetMinutes,
+                    Lines = order.Lines.Select(line => new
+                    {
+                        line.ProductId,
+                        line.Quantity,
+                        line.UnitPrice,
+                        line.LineTotal
+                    }).ToList()
                 },
                 cancellationToken: default);
 
@@ -527,7 +588,12 @@ public class MobileWorkflowService : IMobileWorkflowService
         }
     }
 
-    public async Task EndDayAsync(string repUserId, decimal endLat, decimal endLong)
+    public async Task EndDayAsync(
+        string repUserId,
+        decimal endLat,
+        decimal endLong,
+        string? endTimeZoneId,
+        int? endUtcOffsetMinutes)
     {
         await using var transaction = await _dbContext.Database.BeginTransactionAsync();
 
@@ -537,6 +603,8 @@ public class MobileWorkflowService : IMobileWorkflowService
             session.EndDayTimestampUtc = DateTime.UtcNow;
             session.EndDayLat = endLat;
             session.EndDayLong = endLong;
+            session.EndDayTimeZoneId = NormalizeTimeZoneId(endTimeZoneId);
+            session.EndDayUtcOffsetMinutes = endUtcOffsetMinutes;
             session.Status = DaySessionStatus.Ended;
             session.SyncStatus = SyncStatus.Pending;
 
@@ -551,8 +619,12 @@ public class MobileWorkflowService : IMobileWorkflowService
                     session.EndDayTimestampUtc,
                     session.StartDayLat,
                     session.StartDayLong,
+                    session.StartDayTimeZoneId,
+                    session.StartDayUtcOffsetMinutes,
                     session.EndDayLat,
                     session.EndDayLong,
+                    session.EndDayTimeZoneId,
+                    session.EndDayUtcOffsetMinutes,
                     session.SelectedRouteId,
                     session.Status
                 },
@@ -664,5 +736,16 @@ public class MobileWorkflowService : IMobileWorkflowService
     private static double ToRadians(double degrees)
     {
         return degrees * (Math.PI / 180);
+    }
+
+    private static string? NormalizeTimeZoneId(string? timeZoneId)
+    {
+        if (string.IsNullOrWhiteSpace(timeZoneId))
+        {
+            return null;
+        }
+
+        var trimmed = timeZoneId.Trim();
+        return trimmed.Length > 100 ? trimmed[..100] : trimmed;
     }
 }

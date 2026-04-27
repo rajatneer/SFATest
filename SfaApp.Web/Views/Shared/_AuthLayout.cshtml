@@ -11,10 +11,56 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
 <body>
-    <div class="sfa-auth-shell">
-        <div class="sfa-auth-gradient"></div>
-        <div class="sfa-auth-content">
-            @RenderBody()
+    <div class="sfa-login-shell">
+        <aside class="sfa-login-left-pane">
+            <div class="sfa-login-left-orbits"></div>
+
+            <div class="sfa-login-left-top">
+                <div class="sfa-login-brand-mark">S</div>
+                <div>
+                    <div class="sfa-login-brand-title">FieldForce SFA</div>
+                    <div class="sfa-login-brand-subtitle">FMCG Sales Force Automation</div>
+                </div>
+            </div>
+
+            <div class="sfa-login-left-middle">
+                <h1 class="sfa-login-left-heading">Empower your field<br />sales team</h1>
+                <div class="sfa-login-feature-list">
+                    <div class="sfa-login-feature-item">
+                        <div class="sfa-login-feature-icon">GPS</div>
+                        <div>
+                            <div class="sfa-login-feature-title">GPS-Verified Check-ins</div>
+                            <div class="sfa-login-feature-description">Geo-validated customer visits with tolerance control</div>
+                        </div>
+                    </div>
+                    <div class="sfa-login-feature-item">
+                        <div class="sfa-login-feature-icon">ORD</div>
+                        <div>
+                            <div class="sfa-login-feature-title">Offline-First Orders</div>
+                            <div class="sfa-login-feature-description">Capture orders even without network. Sync when online.</div>
+                        </div>
+                    </div>
+                    <div class="sfa-login-feature-item">
+                        <div class="sfa-login-feature-icon">ANA</div>
+                        <div>
+                            <div class="sfa-login-feature-title">Real-Time Analytics</div>
+                            <div class="sfa-login-feature-description">Route coverage, strike rates, and distributor tracking</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sfa-login-left-footer">&copy; 2026 FieldForce SFA. All rights reserved.</div>
+        </aside>
+
+        <main class="sfa-login-right-pane">
+            <div class="sfa-login-right-inner">
+                <div class="sfa-login-mobile-brand">
+                    <div class="sfa-login-brand-mark">S</div>
+                    <div class="sfa-login-brand-title-mobile">FieldForce SFA</div>
+                </div>
+                @RenderBody()
+            </div>
         </div>
     </div>
 

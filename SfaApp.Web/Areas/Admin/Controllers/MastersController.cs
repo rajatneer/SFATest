@@ -23,6 +23,11 @@ public class MastersController : Controller
 
     public async Task<IActionResult> Index()
     {
+        var salesRepRoleId = await _dbContext.Roles
+            .Where(x => x.Name == "SalesRep")
+            .Select(x => x.Id)
+            .FirstOrDefaultAsync();
+
         var model = new MasterSetupViewModel
         {
             Territories = await _dbContext.Territories.OrderBy(x => x.TerritoryName).ToListAsync(),
@@ -31,6 +36,32 @@ public class MastersController : Controller
                 .Include(x => x.Territory)
                 .Include(x => x.Distributor)
                 .OrderBy(x => x.RouteName)
+                .ToListAsync(),
+            SalesReps = string.IsNullOrWhiteSpace(salesRepRoleId)
+                ? []
+                : await (from user in _dbContext.Users
+                         join userRole in _dbContext.UserRoles on user.Id equals userRole.UserId
+                         where userRole.RoleId == salesRepRoleId && user.IsActive
+                         orderby user.FullName, user.Email
+                         select new LookupItemViewModel
+                         {
+                             Value = user.Id,
+                             Text = $"{(user.FullName ?? user.Email ?? user.UserName ?? user.Id)} ({(user.Email ?? user.UserName ?? "-")})"
+                         })
+                    .Distinct()
+                    .ToListAsync(),
+            ActiveRouteAssignments = await (from assignment in _dbContext.RouteAssignments
+                                            join route in _dbContext.SalesRoutes on assignment.RouteId equals route.Id
+                                            join rep in _dbContext.Users on assignment.RepUserId equals rep.Id
+                                            where assignment.IsActive
+                                            orderby route.RouteName, rep.FullName, rep.Email
+                                            select new RouteAssignmentSummaryViewModel
+                                            {
+                                                RouteId = route.Id,
+                                                RouteName = route.RouteName,
+                                                RepName = rep.FullName ?? rep.Email ?? rep.UserName ?? rep.Id,
+                                                StartDate = assignment.StartDate
+                                            })
                 .ToListAsync()
         };
 
@@ -175,6 +206,108 @@ public class MastersController : Controller
         {
             _logger.LogError(ex, "Create route failed");
             TempData["ErrorMessage"] = "Unable to add route.";
+        }
+
+        return RedirectToAction(nameof(Index), "Masters", new { area = "Admin" });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateRouteAssignment(int routeId, string repUserId, DateOnly? startDate)
+    {
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync();
+
+        try
+        {
+            if (routeId <= 0 || string.IsNullOrWhiteSpace(repUserId))
+            {
+                TempData["ErrorMessage"] = "Route and sales rep are required for assignment.";
+                return RedirectToAction(nameof(Index), "Masters", new { area = "Admin" });
+            }
+
+            var route = await _dbContext.SalesRoutes
+                .FirstOrDefaultAsync(x => x.Id == routeId && x.IsActive);
+            if (route is null)
+            {
+                TempData["ErrorMessage"] = "Select a valid active route.";
+                return RedirectToAction(nameof(Index), "Masters", new { area = "Admin" });
+            }
+
+            var normalizedRepUserId = repUserId.Trim();
+            var salesRepRoleId = await _dbContext.Roles
+                .Where(x => x.Name == "SalesRep")
+                .Select(x => x.Id)
+                .FirstOrDefaultAsync();
+
+            if (string.IsNullOrWhiteSpace(salesRepRoleId))
+            {
+                throw new InvalidOperationException("Sales rep role is not configured.");
+            }
+
+            var repExists = await (from user in _dbContext.Users
+                                   join userRole in _dbContext.UserRoles on user.Id equals userRole.UserId
+                                   where user.Id == normalizedRepUserId && user.IsActive && userRole.RoleId == salesRepRoleId
+                                   select user.Id)
+                .AnyAsync();
+
+            if (!repExists)
+            {
+                TempData["ErrorMessage"] = "Select a valid active sales rep.";
+                return RedirectToAction(nameof(Index), "Masters", new { area = "Admin" });
+            }
+
+            var effectiveStartDate = startDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
+
+            var activeAssignments = await _dbContext.RouteAssignments
+                .Where(x => x.RouteId == routeId && x.IsActive && x.RepUserId != normalizedRepUserId)
+                .ToListAsync();
+
+            foreach (var activeAssignment in activeAssignments)
+            {
+                activeAssignment.IsActive = false;
+                if (!activeAssignment.EndDate.HasValue || activeAssignment.EndDate.Value >= effectiveStartDate)
+                {
+                    activeAssignment.EndDate = effectiveStartDate.AddDays(-1);
+                }
+            }
+
+            var assignment = await _dbContext.RouteAssignments
+                .FirstOrDefaultAsync(x => x.RouteId == routeId && x.RepUserId == normalizedRepUserId);
+
+            if (assignment is null)
+            {
+                assignment = new RouteAssignment
+                {
+                    RouteId = routeId,
+                    RepUserId = normalizedRepUserId
+                };
+                _dbContext.RouteAssignments.Add(assignment);
+            }
+
+            assignment.StartDate = effectiveStartDate;
+            assignment.EndDate = null;
+            assignment.IsActive = true;
+
+            await _dbContext.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            TempData["SuccessMessage"] = "Route assignment updated.";
+        }
+        catch (InvalidOperationException ex)
+        {
+            await transaction.RollbackAsync();
+            _logger.LogError(ex, "Create route assignment failed");
+            TempData["ErrorMessage"] = "Unable to assign route.";
+        }
+        catch (DbUpdateException ex)
+        {
+            await transaction.RollbackAsync();
+            _logger.LogError(ex, "Create route assignment failed");
+            TempData["ErrorMessage"] = "Unable to assign route.";
+        }
+        finally
+        {
+            await transaction.DisposeAsync();
         }
 
         return RedirectToAction(nameof(Index), "Masters", new { area = "Admin" });

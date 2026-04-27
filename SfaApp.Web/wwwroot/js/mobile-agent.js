@@ -396,6 +396,34 @@
         return entries;
     }
 
+    function getClientTimeZoneDetails() {
+        let timeZoneId = "";
+        try {
+            timeZoneId = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+        } catch {
+            timeZoneId = "";
+        }
+
+        return {
+            timeZoneId: timeZoneId,
+            utcOffsetMinutes: new Date().getTimezoneOffset().toString()
+        };
+    }
+
+    function populateTimeZoneFields(form) {
+        const details = getClientTimeZoneDetails();
+
+        const timezoneInputs = form.querySelectorAll("input[name$='TimeZoneId']");
+        timezoneInputs.forEach(function (input) {
+            input.value = details.timeZoneId;
+        });
+
+        const offsetInputs = form.querySelectorAll("input[name$='UtcOffsetMinutes']");
+        offsetInputs.forEach(function (input) {
+            input.value = details.utcOffsetMinutes;
+        });
+    }
+
     async function queueFormSubmission(form) {
         const entries = getSerializableFormEntries(form);
         const queueItem = {
@@ -625,6 +653,8 @@
 
     function wireForm(form) {
         form.addEventListener("submit", async function (event) {
+            populateTimeZoneFields(form);
+
             const requiresGeo = form.dataset.autoGeolocation === "true";
             if (requiresGeo && form.dataset.geoReady !== "true") {
                 event.preventDefault();
@@ -653,6 +683,7 @@
     function initializeForms() {
         const forms = document.querySelectorAll("form[data-auto-geolocation='true'], form[data-offline-enabled='true']");
         forms.forEach(function (form) {
+            populateTimeZoneFields(form);
             wireForm(form);
         });
     }

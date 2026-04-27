@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace SfaApp.Web.Models.Domain;
 
 public class DaySession
@@ -12,9 +14,19 @@ public class DaySession
     public decimal StartDayLat { get; set; }
     public decimal StartDayLong { get; set; }
 
+    [StringLength(100)]
+    public string? StartDayTimeZoneId { get; set; }
+
+    public int? StartDayUtcOffsetMinutes { get; set; }
+
     public DateTime? EndDayTimestampUtc { get; set; }
     public decimal? EndDayLat { get; set; }
     public decimal? EndDayLong { get; set; }
+
+    [StringLength(100)]
+    public string? EndDayTimeZoneId { get; set; }
+
+    public int? EndDayUtcOffsetMinutes { get; set; }
 
     public int? SelectedRouteId { get; set; }
     public SalesRoute? SelectedRoute { get; set; }

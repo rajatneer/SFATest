@@ -283,7 +283,7 @@ namespace SfaApp.Web.Data.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("varchar(20)");
 
-                    b.Property<int?>("RouteId")
+                    b.Property<int>("RouteId")
                         .HasColumnType("int");
 
                     b.Property<string>("State")
@@ -336,8 +336,15 @@ namespace SfaApp.Web.Data.Migrations
                         .HasPrecision(10, 7)
                         .HasColumnType("decimal(10,7)");
 
+                    b.Property<string>("EndDayTimeZoneId")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
                     b.Property<DateTime?>("EndDayTimestampUtc")
                         .HasColumnType("datetime(6)");
+
+                    b.Property<int?>("EndDayUtcOffsetMinutes")
+                        .HasColumnType("int");
 
                     b.Property<string>("RepUserId")
                         .IsRequired()
@@ -354,8 +361,15 @@ namespace SfaApp.Web.Data.Migrations
                         .HasPrecision(10, 7)
                         .HasColumnType("decimal(10,7)");
 
+                    b.Property<string>("StartDayTimeZoneId")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
                     b.Property<DateTime>("StartDayTimestampUtc")
                         .HasColumnType("datetime(6)");
+
+                    b.Property<int?>("StartDayUtcOffsetMinutes")
+                        .HasColumnType("int");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
@@ -562,9 +576,16 @@ namespace SfaApp.Web.Data.Migrations
                     b.Property<int>("SyncStatus")
                         .HasColumnType("int");
 
+                    b.Property<string>("TimeZoneId")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
                     b.Property<decimal>("TotalAmount")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<int?>("UtcOffsetMinutes")
+                        .HasColumnType("int");
 
                     b.Property<int?>("VisitId")
                         .HasColumnType("int");
@@ -796,8 +817,15 @@ namespace SfaApp.Web.Data.Migrations
                         .HasPrecision(10, 7)
                         .HasColumnType("decimal(10,7)");
 
+                    b.Property<string>("CheckinTimeZoneId")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
                     b.Property<DateTime?>("CheckinTimestampUtc")
                         .HasColumnType("datetime(6)");
+
+                    b.Property<int?>("CheckinUtcOffsetMinutes")
+                        .HasColumnType("int");
 
                     b.Property<decimal?>("CheckoutLat")
                         .HasPrecision(10, 7)
@@ -807,8 +835,15 @@ namespace SfaApp.Web.Data.Migrations
                         .HasPrecision(10, 7)
                         .HasColumnType("decimal(10,7)");
 
+                    b.Property<string>("CheckoutTimeZoneId")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
                     b.Property<DateTime?>("CheckoutTimestampUtc")
                         .HasColumnType("datetime(6)");
+
+                    b.Property<int?>("CheckoutUtcOffsetMinutes")
+                        .HasColumnType("int");
 
                     b.Property<string>("ClientGeneratedUuid")
                         .IsRequired()
@@ -915,6 +950,9 @@ namespace SfaApp.Web.Data.Migrations
                     b.Property<DateTimeOffset?>("LockoutEnd")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<string>("ManagerUserId")
+                        .HasColumnType("varchar(255)");
+
                     b.Property<string>("NormalizedEmail")
                         .HasMaxLength(256)
                         .HasColumnType("varchar(256)");
@@ -943,6 +981,8 @@ namespace SfaApp.Web.Data.Migrations
                         .HasColumnType("varchar(256)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ManagerUserId");
 
                     b.HasIndex("NormalizedEmail")
                         .HasDatabaseName("EmailIndex");
@@ -1026,7 +1066,8 @@ namespace SfaApp.Web.Data.Migrations
                     b.HasOne("SfaApp.Web.Models.Domain.SalesRoute", "Route")
                         .WithMany("Customers")
                         .HasForeignKey("RouteId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("SfaApp.Web.Models.Domain.Territory", "Territory")
                         .WithMany()
@@ -1161,6 +1202,14 @@ namespace SfaApp.Web.Data.Migrations
                     b.Navigation("DaySession");
 
                     b.Navigation("Route");
+                });
+
+            modelBuilder.Entity("SfaApp.Web.Models.Identity.ApplicationUser", b =>
+                {
+                    b.HasOne("SfaApp.Web.Models.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("ManagerUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("SfaApp.Web.Models.Domain.Customer", b =>

@@ -3,6 +3,11 @@
 @{
     ViewData["Title"] = "User Management";
     var roles = ViewBag.Roles as IEnumerable<Microsoft.AspNetCore.Identity.IdentityRole> ?? [];
+    var tsiUsers = ViewBag.TsiUsers as IEnumerable<SfaApp.Web.Models.Identity.ApplicationUser> ?? [];
+    var distributors = ViewBag.Distributors as IEnumerable<SfaApp.Web.Models.Domain.Distributor> ?? [];
+    var userRoleLookup = ViewBag.UserRoleLookup as IDictionary<string, string> ?? new Dictionary<string, string>();
+    var managerLookup = ViewBag.ManagerLookup as IDictionary<string, string> ?? new Dictionary<string, string>();
+    var distributorLookup = ViewBag.DistributorLookup as IDictionary<int, string> ?? new Dictionary<int, string>();
 }
 
 <section class="sfa-panel p-3 p-md-4 mb-3">
@@ -12,9 +17,9 @@
     <div class="sfa-soft-block">
         <form asp-area="Admin" asp-controller="Users" asp-action="Create" method="post">
             <div class="row g-2">
-                <div class="col-md-3"><input class="form-control" name="Email" placeholder="Email" required /></div>
-                <div class="col-md-3"><input class="form-control" name="FullName" placeholder="Full Name" required /></div>
-                <div class="col-md-3"><input class="form-control" name="Password" placeholder="Password" required /></div>
+                <div class="col-md-2"><input class="form-control" name="Email" placeholder="Email" required /></div>
+                <div class="col-md-2"><input class="form-control" name="FullName" placeholder="Full Name" required /></div>
+                <div class="col-md-2"><input class="form-control" name="Password" placeholder="Password" required /></div>
                 <div class="col-md-2">
                     <select class="form-select" name="RoleName">
                         @foreach (var role in roles)
@@ -23,7 +28,25 @@
                         }
                     </select>
                 </div>
-                <div class="col-md-1"><button class="sfa-btn sfa-btn-primary w-100" type="submit">Add</button></div>
+                <div class="col-md-2">
+                    <select class="form-select" name="ManagerUserId">
+                        <option value="">TSI (SalesRep only)</option>
+                        @foreach (var tsi in tsiUsers)
+                        {
+                            <option value="@tsi.Id">@(tsi.FullName ?? tsi.Email ?? tsi.UserName ?? tsi.Id)</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select" name="DistributorId">
+                        <option value="">Distributor (DistributorUser only)</option>
+                        @foreach (var distributor in distributors)
+                        {
+                            <option value="@distributor.Id">@distributor.DistributorName</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-12"><button class="sfa-btn sfa-btn-primary" type="submit">Add</button></div>
             </div>
         </form>
     </div>
@@ -32,13 +55,16 @@
 <section class="sfa-panel p-3 p-md-4">
     <div class="table-responsive sfa-table-wrap">
         <table class="table mb-0 sfa-table">
-            <thead><tr><th>Email</th><th>Full Name</th><th>Status</th></tr></thead>
+            <thead><tr><th>Email</th><th>Full Name</th><th>Role</th><th>TSI Manager</th><th>Distributor</th><th>Status</th></tr></thead>
             <tbody>
             @foreach (var user in Model)
             {
                 <tr>
                     <td>@user.Email</td>
                     <td>@user.FullName</td>
+                    <td>@(userRoleLookup.TryGetValue(user.Id, out var roleName) ? roleName : "-")</td>
+                    <td>@(!string.IsNullOrWhiteSpace(user.ManagerUserId) && managerLookup.TryGetValue(user.ManagerUserId, out var managerName) ? managerName : "-")</td>
+                    <td>@(user.DistributorId.HasValue && distributorLookup.TryGetValue(user.DistributorId.Value, out var distributorName) ? distributorName : "-")</td>
                     <td>
                         @if (user.IsActive)
                         {

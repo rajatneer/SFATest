@@ -627,10 +627,27 @@ public class UploadJobProcessingService : IUploadJobProcessingService
 
         var routeCodes = rows.Select(x => GetRequiredValue(x, "RouteCode")).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
         var repEmails = rows.Select(x => GetRequiredValue(x, "RepEmail")).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        var normalizedRepEmails = repEmails.Select(x => x.ToUpperInvariant()).ToList();
+
+        var salesRepRoleId = await _dbContext.Roles
+            .Where(x => x.Name == "SalesRep")
+            .Select(x => x.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (string.IsNullOrWhiteSpace(salesRepRoleId))
+        {
+            throw new InvalidOperationException("SalesRep role is not configured.");
+        }
 
         var routes = await _dbContext.SalesRoutes.Where(x => routeCodes.Contains(x.RouteCode)).ToListAsync(cancellationToken);
-        var users = await _dbContext.Users
-            .Where(x => x.NormalizedEmail != null && repEmails.Select(y => y.ToUpperInvariant()).Contains(x.NormalizedEmail))
+        var users = await (from user in _dbContext.Users
+                           join userRole in _dbContext.UserRoles on user.Id equals userRole.UserId
+                           where user.IsActive
+                                 && userRole.RoleId == salesRepRoleId
+                                 && user.NormalizedEmail != null
+                                 && normalizedRepEmails.Contains(user.NormalizedEmail)
+                           select user)
+            .Distinct()
             .ToListAsync(cancellationToken);
 
         var routeMap = routes.ToDictionary(x => x.RouteCode, StringComparer.OrdinalIgnoreCase);
@@ -643,9 +660,16 @@ public class UploadJobProcessingService : IUploadJobProcessingService
             .Where(x => routeIds.Contains(x.RouteId) && repUserIds.Contains(x.RepUserId))
             .ToListAsync(cancellationToken);
 
+        var existingActiveAssignmentsByRoute = await _dbContext.RouteAssignments
+            .Where(x => routeIds.Contains(x.RouteId) && x.IsActive)
+            .GroupBy(x => x.RouteId)
+            .ToDictionaryAsync(group => group.Key, group => group.ToList(), cancellationToken);
+
         var assignmentMap = existingAssignments.ToDictionary(
             x => $"{x.RouteId}:{x.RepUserId}",
             StringComparer.OrdinalIgnoreCase);
+
+        var activeRepPerRouteInBatch = new Dictionary<int, string>();
 
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
@@ -684,6 +708,29 @@ public class UploadJobProcessingService : IUploadJobProcessingService
                     assignment.StartDate = ParseDateOnlyOrDefault(GetOptionalValue(row, "StartDate"), DateOnly.FromDateTime(DateTime.UtcNow), row.RowNumber, "StartDate");
                     assignment.EndDate = ParseNullableDateOnly(GetOptionalValue(row, "EndDate"), row.RowNumber, "EndDate");
                     assignment.IsActive = assignment.EndDate is null;
+
+                    if (assignment.IsActive)
+                    {
+                        if (activeRepPerRouteInBatch.TryGetValue(route.Id, out var existingActiveRepInBatch)
+                            && !string.Equals(existingActiveRepInBatch, user.Id, StringComparison.OrdinalIgnoreCase))
+                        {
+                            throw new InvalidOperationException($"Route {routeCode} has more than one active sales rep in upload data.");
+                        }
+
+                        activeRepPerRouteInBatch[route.Id] = user.Id;
+
+                        if (existingActiveAssignmentsByRoute.TryGetValue(route.Id, out var existingActiveAssignments))
+                        {
+                            foreach (var existingAssignment in existingActiveAssignments.Where(x => !string.Equals(x.RepUserId, user.Id, StringComparison.OrdinalIgnoreCase)))
+                            {
+                                existingAssignment.IsActive = false;
+                                if (!existingAssignment.EndDate.HasValue || existingAssignment.EndDate.Value >= assignment.StartDate)
+                                {
+                                    existingAssignment.EndDate = assignment.StartDate.AddDays(-1);
+                                }
+                            }
+                        }
+                    }
                 }
                 catch (InvalidOperationException ex)
                 {

@@ -14,6 +14,12 @@ public class CheckoutViewModel
     [Range(-180, 180)]
     public decimal CheckoutLong { get; set; }
 
+    [StringLength(100)]
+    public string? TimeZoneId { get; set; }
+
+    [Range(-900, 900)]
+    public int? UtcOffsetMinutes { get; set; }
+
     [StringLength(1000)]
     public string? VisitNotes { get; set; }
 

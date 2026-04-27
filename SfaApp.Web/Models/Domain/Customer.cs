@@ -60,7 +60,8 @@ public class Customer
 
     public DateTime? CoordinateCaptureTimestamp { get; set; }
 
-    public int? RouteId { get; set; }
+    [Range(1, int.MaxValue)]
+    public int RouteId { get; set; }
     public SalesRoute? Route { get; set; }
 
     public int? TerritoryId { get; set; }

@@ -21,6 +21,7 @@
                 <tr>
                     <th>Name</th>
                     <th>Outlet Code</th>
+                    <th>Route</th>
                     <th>Contact</th>
                     <th>City</th>
                     <th>Status</th>
@@ -32,6 +33,7 @@
                 <tr>
                     <td>@item.Name</td>
                     <td>@item.OutletCode</td>
+                    <td>@(item.Route?.RouteName ?? "-")</td>
                     <td>@item.ContactPerson (@item.Phone)</td>
                     <td>@item.City</td>
                     <td>

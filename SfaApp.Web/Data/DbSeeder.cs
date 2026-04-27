@@ -113,6 +113,24 @@ public static class DbSeeder
             await dbContext.SaveChangesAsync();
         }
 
+        salesRepUser.ManagerUserId = tsiUser.Id;
+        salesRepUser.IsActive = true;
+        var salesRepUpdateResult = await userManager.UpdateAsync(salesRepUser);
+        if (!salesRepUpdateResult.Succeeded)
+        {
+            var errors = string.Join(", ", salesRepUpdateResult.Errors.Select(x => x.Description));
+            throw new InvalidOperationException($"Failed to update sales rep user: {errors}");
+        }
+
+        distributorUser.DistributorId = distributor.Id;
+        distributorUser.IsActive = true;
+        var distributorUserUpdateResult = await userManager.UpdateAsync(distributorUser);
+        if (!distributorUserUpdateResult.Succeeded)
+        {
+            var errors = string.Join(", ", distributorUserUpdateResult.Errors.Select(x => x.Description));
+            throw new InvalidOperationException($"Failed to update distributor user: {errors}");
+        }
+
         var assignmentExists = await dbContext.RouteAssignments.AnyAsync(x => x.RouteId == route.Id && x.RepUserId == salesRepUser.Id && x.IsActive);
         if (!assignmentExists)
         {

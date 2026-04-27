@@ -2,30 +2,288 @@
 
 @{
     ViewData["Title"] = "Login";
+    Layout = "_MobileLayout";
 }
 
-<section class="sfa-mobile-card">
-    <h1 class="h4 mb-1">Agent Login</h1>
-    <p class="sfa-page-subtitle">Use your sales rep credentials.</p>
+<style>
+    .mobile-login-screen {
+        min-height: calc(100vh - 6rem);
+        display: grid;
+        align-content: start;
+        gap: 0.9rem;
+    }
 
-    <form asp-action="Login" method="post">
-        <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
-        <div class="mb-2">
-            <label asp-for="Username" class="form-label"></label>
-            <input asp-for="Username" class="form-control" />
+    .mobile-login-hero {
+        border-radius: 18px;
+        padding: 1rem;
+        color: #ffffff;
+        background: linear-gradient(140deg, #1e3fa8 0%, #244fd5 58%, #2f63ef 100%);
+        box-shadow: 0 14px 28px -20px rgba(18, 44, 114, 0.9);
+    }
+
+    .mobile-login-hero h1 {
+        margin: 0;
+        font-size: 1.35rem;
+        line-height: 1.2;
+        font-weight: 700;
+    }
+
+    .mobile-login-hero p {
+        margin: 0.5rem 0 0;
+        color: #dce7ff;
+        font-size: 0.9rem;
+    }
+
+    .mobile-login-card {
+        background: #ffffff;
+        border: 1px solid #dbe2f1;
+        border-radius: 18px;
+        padding: 1rem;
+        box-shadow: 0 16px 28px -24px rgba(16, 34, 82, 0.8);
+    }
+
+    .mobile-login-title {
+        margin: 0;
+        font-size: 1.28rem;
+        font-weight: 700;
+        color: #102248;
+    }
+
+    .mobile-login-subtitle {
+        margin: 0.3rem 0 0.95rem;
+        color: #6a728b;
+        font-size: 0.9rem;
+    }
+
+    .mobile-login-form {
+        display: grid;
+        gap: 0.82rem;
+    }
+
+    .mobile-login-error {
+        margin: 0;
+        border-radius: 10px;
+        border: 1px solid #f5c8c8;
+        background: #fff3f3;
+        color: #a53030;
+        font-size: 0.84rem;
+        padding: 0.68rem 0.8rem;
+    }
+
+    .mobile-login-field {
+        display: grid;
+        gap: 0.35rem;
+    }
+
+    .mobile-login-label {
+        margin: 0;
+        font-size: 0.88rem;
+        color: #1e2a4a;
+        font-weight: 700;
+    }
+
+    .mobile-login-input {
+        width: 100%;
+        border: 1px solid #d3d9e8;
+        background: #f8f9fd;
+        color: #1d2b4f;
+        border-radius: 12px;
+        padding: 0.75rem 0.88rem;
+        font-size: 0.92rem;
+    }
+
+    .mobile-login-input::placeholder {
+        color: #8a93ae;
+    }
+
+    .mobile-login-input:focus {
+        outline: none;
+        border-color: #5f84ff;
+        box-shadow: 0 0 0 0.16rem rgba(89, 122, 241, 0.22);
+    }
+
+    .mobile-login-password-wrap {
+        position: relative;
+    }
+
+    .mobile-login-password-wrap .mobile-login-input {
+        padding-right: 3.5rem;
+    }
+
+    .mobile-login-password-toggle {
+        position: absolute;
+        right: 0.55rem;
+        top: 50%;
+        transform: translateY(-50%);
+        border: none;
+        background: transparent;
+        color: #6f7a98;
+        font-weight: 700;
+        font-size: 0.77rem;
+        padding: 0.2rem 0.3rem;
+    }
+
+    .mobile-login-submit {
+        border: none;
+        border-radius: 13px;
+        padding: 0.82rem 0.95rem;
+        color: #ffffff;
+        font-size: 1rem;
+        font-weight: 700;
+        background: #255fe3;
+    }
+
+    .mobile-login-helper {
+        margin: 0;
+        font-size: 0.8rem;
+        text-align: center;
+        color: #7f88a5;
+    }
+
+    .mobile-login-divider {
+        margin: 0.82rem 0 0.65rem;
+        text-align: center;
+        color: #8f98b1;
+        font-size: 0.78rem;
+        position: relative;
+    }
+
+    .mobile-login-divider::before,
+    .mobile-login-divider::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        width: 32%;
+        border-top: 1px solid #e3e7f1;
+    }
+
+    .mobile-login-divider::before {
+        left: 0;
+    }
+
+    .mobile-login-divider::after {
+        right: 0;
+    }
+
+    .mobile-login-demo-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.45rem;
+    }
+
+    .mobile-login-demo-btn {
+        border-radius: 10px;
+        border: 1px solid transparent;
+        text-align: left;
+        font-size: 0.8rem;
+        font-weight: 700;
+        padding: 0.55rem 0.66rem;
+    }
+
+    .mobile-login-demo-btn.is-admin {
+        color: #4f3ac8;
+        background: #ede9ff;
+        border-color: #d9d2fc;
+    }
+
+    .mobile-login-demo-btn.is-tsi {
+        color: #1f62d2;
+        background: #ebf2ff;
+        border-color: #cddcff;
+    }
+
+    .mobile-login-demo-btn.is-rep {
+        color: #137842;
+        background: #e4f6eb;
+        border-color: #c7e8d5;
+    }
+
+    .mobile-login-demo-btn.is-dist {
+        color: #c95e03;
+        background: #fff1e4;
+        border-color: #f0ddc0;
+    }
+</style>
+
+<section class="mobile-login-screen">
+    <div class="mobile-login-hero">
+        <h1>FieldForce SFA</h1>
+        <p>Fast daily login for sales reps with offline-ready workflow.</p>
+    </div>
+
+    <div class="mobile-login-card">
+        <h2 class="mobile-login-title">Welcome back</h2>
+        <p class="mobile-login-subtitle">Sign in to your account</p>
+
+        <form asp-action="Login" method="post" class="mobile-login-form">
+            <div asp-validation-summary="ModelOnly" class="mobile-login-error"></div>
+
+            <div class="mobile-login-field">
+                <label asp-for="Username" class="mobile-login-label">Username</label>
+                <input asp-for="Username" class="mobile-login-input" autocomplete="username" placeholder="Enter your username" />
+                <span asp-validation-for="Username" class="text-danger small"></span>
+            </div>
+
+            <div class="mobile-login-field">
+                <label asp-for="Password" class="mobile-login-label">Password</label>
+                <div class="mobile-login-password-wrap">
+                    <input asp-for="Password" id="mobile-password" class="mobile-login-input" autocomplete="current-password" placeholder="Enter your password" />
+                    <button type="button" class="mobile-login-password-toggle" data-password-target="mobile-password" aria-label="Toggle password visibility">Show</button>
+                </div>
+                <span asp-validation-for="Password" class="text-danger small"></span>
+            </div>
+
+            <div class="form-check d-none">
+                <input asp-for="RememberMe" class="form-check-input" />
+                <label asp-for="RememberMe" class="form-check-label"></label>
+            </div>
+
+            <button type="submit" class="mobile-login-submit">Sign In</button>
+            <p class="mobile-login-helper">Forgot password? Contact your administrator.</p>
+        </form>
+
+        <div class="mobile-login-divider">Quick demo login</div>
+        <div class="mobile-login-demo-grid">
+            <button type="button" class="mobile-login-demo-btn is-admin" data-demo-email="admin@sfa.local" data-demo-password="Admin@12345">Admin</button>
+            <button type="button" class="mobile-login-demo-btn is-tsi" data-demo-email="tsi@sfa.local" data-demo-password="Tsi@12345">TSI</button>
+            <button type="button" class="mobile-login-demo-btn is-rep" data-demo-email="rep@sfa.local" data-demo-password="Rep@12345">Sales Rep</button>
+            <button type="button" class="mobile-login-demo-btn is-dist" data-demo-email="dist@sfa.local" data-demo-password="Dist@12345">Distributor</button>
         </div>
-        <div class="mb-2">
-            <label asp-for="Password" class="form-label"></label>
-            <input asp-for="Password" class="form-control" />
-        </div>
-        <div class="form-check mb-3">
-            <input asp-for="RememberMe" class="form-check-input" />
-            <label asp-for="RememberMe" class="form-check-label"></label>
-        </div>
-        <button type="submit" class="sfa-btn sfa-btn-primary w-100">Login</button>
-    </form>
+    </div>
 </section>
 
-<div class="sfa-alert mt-3" style="background:#edf4ff; border-color:#c9d9ff; color:#264276;">
-    Demo rep: rep@sfa.local / Rep@12345
-</div>
+@section Scripts {
+    <script>
+        (function () {
+            var emailInput = document.getElementById('Username');
+            var passwordInput = document.getElementById('mobile-password');
+
+            document.querySelectorAll('[data-password-target]').forEach(function (toggle) {
+                toggle.addEventListener('click', function () {
+                    var targetId = toggle.getAttribute('data-password-target');
+                    var target = targetId ? document.getElementById(targetId) : null;
+                    if (!target) {
+                        return;
+                    }
+
+                    var toPassword = target.type === 'text';
+                    target.type = toPassword ? 'password' : 'text';
+                    toggle.textContent = toPassword ? 'Show' : 'Hide';
+                });
+            });
+
+            document.querySelectorAll('[data-demo-email]').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    if (!emailInput || !passwordInput) {
+                        return;
+                    }
+
+                    var email = button.getAttribute('data-demo-email') || '';
+                    var password = button.getAttribute('data-demo-password') || '';
+                    emailInput.value = email;
+                    passwordInput.value = password;
+                });
+            });
+        })();
+    </script>
+}

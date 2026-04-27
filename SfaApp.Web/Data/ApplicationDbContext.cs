@@ -31,11 +31,21 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     {
         base.OnModelCreating(builder);
 
+        builder.Entity<ApplicationUser>(entity =>
+        {
+            entity.HasIndex(x => x.ManagerUserId);
+            entity.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(x => x.ManagerUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
         builder.Entity<Customer>(entity =>
         {
             entity.Property(x => x.Name).HasMaxLength(150).IsRequired();
             entity.Property(x => x.CustomerCode).HasMaxLength(50).IsRequired();
             entity.Property(x => x.OutletCode).HasMaxLength(50).IsRequired();
+            entity.Property(x => x.RouteId).IsRequired();
             entity.Property(x => x.ContactPerson).HasMaxLength(120);
             entity.Property(x => x.Phone).HasMaxLength(20);
             entity.Property(x => x.City).HasMaxLength(80);
@@ -114,8 +124,10 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
         {
             entity.Property(x => x.StartDayLat).HasPrecision(10, 7);
             entity.Property(x => x.StartDayLong).HasPrecision(10, 7);
+            entity.Property(x => x.StartDayTimeZoneId).HasMaxLength(100);
             entity.Property(x => x.EndDayLat).HasPrecision(10, 7);
             entity.Property(x => x.EndDayLong).HasPrecision(10, 7);
+            entity.Property(x => x.EndDayTimeZoneId).HasMaxLength(100);
             entity.HasOne(x => x.SelectedRoute)
                 .WithMany()
                 .HasForeignKey(x => x.SelectedRouteId)
@@ -145,10 +157,12 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
             entity.Property(x => x.Notes).HasMaxLength(1000);
             entity.Property(x => x.CheckinLat).HasPrecision(10, 7);
             entity.Property(x => x.CheckinLong).HasPrecision(10, 7);
+            entity.Property(x => x.CheckinTimeZoneId).HasMaxLength(100);
             entity.Property(x => x.CustomerRefLat).HasPrecision(10, 7);
             entity.Property(x => x.CustomerRefLong).HasPrecision(10, 7);
             entity.Property(x => x.CheckoutLat).HasPrecision(10, 7);
             entity.Property(x => x.CheckoutLong).HasPrecision(10, 7);
+            entity.Property(x => x.CheckoutTimeZoneId).HasMaxLength(100);
             entity.Property(x => x.GeoDistanceMeters).HasPrecision(10, 2);
             entity.HasIndex(x => x.ClientGeneratedUuid).IsUnique();
             entity.HasOne(x => x.Customer)
@@ -168,6 +182,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
         builder.Entity<SalesOrder>(entity =>
         {
             entity.Property(x => x.OrderNumber).HasMaxLength(30).IsRequired();
+            entity.Property(x => x.TimeZoneId).HasMaxLength(100);
             entity.Property(x => x.TotalAmount).HasPrecision(18, 2);
             entity.Property(x => x.GrossAmount).HasPrecision(18, 2);
             entity.Property(x => x.NetAmount).HasPrecision(18, 2);

@@ -39,6 +39,11 @@ public class HomeController : Controller
             {
                 return RedirectToAction("Index", "Home", new { area = "Admin" });
             }
+
+            if (await _userManager.IsInRoleAsync(user, "DistributorUser"))
+            {
+                return RedirectToAction("Index", "Orders");
+            }
         }
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);

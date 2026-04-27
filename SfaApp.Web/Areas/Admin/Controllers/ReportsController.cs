@@ -197,7 +197,7 @@ public class ReportsController : Controller
 
         if (repRouteIds is not null)
         {
-            customersQuery = customersQuery.Where(x => x.RouteId.HasValue && repRouteIds.Contains(x.RouteId.Value));
+            customersQuery = customersQuery.Where(x => repRouteIds.Contains(x.RouteId));
         }
 
         var todayLocalStartUtc = ToUtcStart(todayLocal);

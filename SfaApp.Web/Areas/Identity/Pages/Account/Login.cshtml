@@ -4,41 +4,87 @@
     ViewData["Title"] = "Log in";
 }
 
-<section class="sfa-auth-card">
-    <p class="sfa-auth-eyebrow">Sales Force Automation</p>
-    <h1 class="h3 mb-1">Welcome Back</h1>
-    <p class="sfa-page-subtitle mb-3">Sign in to continue to your dashboard.</p>
+<section class="sfa-login-card">
+    <h1 class="sfa-login-card-title">Welcome back</h1>
+    <p class="sfa-login-card-subtitle">Sign in to your account</p>
 
-    <form id="account" method="post">
+    <form id="account" method="post" class="sfa-login-form">
         <input type="hidden" asp-for="ReturnUrl" />
-        <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
 
-        <div class="mb-2">
-            <label asp-for="Input.Email" class="form-label"></label>
-            <input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" />
+        <div asp-validation-summary="ModelOnly" class="sfa-login-error"></div>
+
+        <div class="sfa-login-field-wrap">
+            <label asp-for="Input.Email" class="sfa-login-label">Username</label>
+            <input asp-for="Input.Email" class="sfa-login-input" autocomplete="username" aria-required="true" placeholder="Enter your username" />
             <span asp-validation-for="Input.Email" class="text-danger small"></span>
         </div>
 
-        <div class="mb-2">
-            <label asp-for="Input.Password" class="form-label"></label>
-            <input asp-for="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" />
+        <div class="sfa-login-field-wrap">
+            <label asp-for="Input.Password" class="sfa-login-label">Password</label>
+            <div class="sfa-login-password-wrap">
+                <input asp-for="Input.Password" id="identity-password" class="sfa-login-input sfa-login-password-input" autocomplete="current-password" aria-required="true" placeholder="Enter your password" />
+                <button type="button" class="sfa-login-password-toggle" data-password-target="identity-password" aria-label="Toggle password visibility">Show</button>
+            </div>
             <span asp-validation-for="Input.Password" class="text-danger small"></span>
         </div>
 
-        <div class="form-check mb-3">
+        <div class="form-check d-none">
             <input class="form-check-input" asp-for="Input.RememberMe" />
             <label asp-for="Input.RememberMe" class="form-check-label"></label>
         </div>
 
-        <button id="login-submit" type="submit" class="sfa-btn sfa-btn-primary w-100">Log in</button>
+        <button id="login-submit" type="submit" class="sfa-login-submit">Sign In</button>
+
+        <p class="sfa-login-help-text">Forgot password? Contact your administrator.</p>
     </form>
 
-    <div class="d-grid gap-2 mt-3">
-        <a class="sfa-btn sfa-btn-ghost" asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl">Create New Account</a>
-        <a class="sfa-auth-text-link" asp-area="" asp-controller="Home" asp-action="Index">Back to Main Site</a>
+    <div class="sfa-login-divider">Quick demo login</div>
+    <div class="sfa-login-demo-grid">
+        <button type="button" class="sfa-login-demo-btn is-admin" data-demo-email="admin@sfa.local" data-demo-password="Admin@12345">Admin</button>
+        <button type="button" class="sfa-login-demo-btn is-tsi" data-demo-email="tsi@sfa.local" data-demo-password="Tsi@12345">TSI</button>
+        <button type="button" class="sfa-login-demo-btn is-rep" data-demo-email="rep@sfa.local" data-demo-password="Rep@12345">Sales Rep</button>
+        <button type="button" class="sfa-login-demo-btn is-dist" data-demo-email="dist@sfa.local" data-demo-password="Dist@12345">Distributor</button>
+    </div>
+
+    <div class="sfa-login-links">
+        <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl">Create new account</a>
+        <a asp-area="" asp-controller="Home" asp-action="Index">Back to main site</a>
     </div>
 </section>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            var emailInput = document.getElementById('Input_Email');
+            var passwordInput = document.getElementById('identity-password');
+
+            document.querySelectorAll('[data-password-target]').forEach(function (toggle) {
+                toggle.addEventListener('click', function () {
+                    var targetId = toggle.getAttribute('data-password-target');
+                    var target = targetId ? document.getElementById(targetId) : null;
+                    if (!target) {
+                        return;
+                    }
+
+                    var toPassword = target.type === 'text';
+                    target.type = toPassword ? 'password' : 'text';
+                    toggle.textContent = toPassword ? 'Show' : 'Hide';
+                });
+            });
+
+            document.querySelectorAll('[data-demo-email]').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    if (!emailInput || !passwordInput) {
+                        return;
+                    }
+
+                    var email = button.getAttribute('data-demo-email') || '';
+                    var password = button.getAttribute('data-demo-password') || '';
+                    emailInput.value = email;
+                    passwordInput.value = password;
+                });
+            });
+        })();
+    </script>
 }

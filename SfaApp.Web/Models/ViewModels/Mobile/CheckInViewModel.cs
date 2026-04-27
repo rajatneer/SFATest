@@ -13,5 +13,11 @@ public class CheckInViewModel
     [Range(-180, 180)]
     public decimal DeviceLong { get; set; }
 
+    [StringLength(100)]
+    public string? TimeZoneId { get; set; }
+
+    [Range(-900, 900)]
+    public int? UtcOffsetMinutes { get; set; }
+
     public bool CaptureCustomerCoordinates { get; set; }
 }

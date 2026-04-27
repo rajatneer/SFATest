@@ -11,16 +11,129 @@
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
         <input asp-for="CustomerId" type="hidden" />
         <input asp-for="VisitId" type="hidden" />
+        <input asp-for="TimeZoneId" type="hidden" />
+        <input asp-for="UtcOffsetMinutes" type="hidden" />
 
-        <div class="mb-2">
-            <label asp-for="ProductId" class="form-label">Product</label>
-            <select asp-for="ProductId" class="form-select" asp-items="ViewBag.ProductOptions"></select>
+        <div id="order-lines-container">
+            @for (var i = 0; i < Model.OrderLines.Count; i++)
+            {
+                <div class="sfa-soft-block mb-2 order-line-row" data-order-line-index="@i">
+                    <div class="mb-2">
+                        <label class="form-label">Product</label>
+                        <select asp-for="OrderLines[i].ProductId" class="form-select" asp-items="ViewBag.ProductOptions" data-order-product></select>
+                        <span asp-validation-for="OrderLines[i].ProductId" class="text-danger"></span>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Quantity</label>
+                        <input asp-for="OrderLines[i].Quantity" class="form-control" type="number" step="0.01" min="0.01" />
+                        <span asp-validation-for="OrderLines[i].Quantity" class="text-danger"></span>
+                    </div>
+                    <button class="btn btn-link text-danger p-0 remove-order-line" type="button">Remove SKU</button>
+                </div>
+            }
         </div>
-        <div class="mb-3">
-            <label asp-for="Quantity" class="form-label"></label>
-            <input asp-for="Quantity" class="form-control" type="number" step="0.001" />
-        </div>
+
+        <button class="btn btn-outline-secondary btn-sm mb-3" id="add-order-line" type="button">Add SKU</button>
+
         <div class="mb-2 small text-muted" data-offline-status></div>
         <button class="sfa-btn sfa-btn-primary w-100" type="submit">Create Order</button>
     </form>
 </section>
+
+@section Scripts {
+    <script>
+        (function () {
+            const container = document.getElementById("order-lines-container");
+            const addButton = document.getElementById("add-order-line");
+            if (!container || !addButton) {
+                return;
+            }
+
+            function getProductOptionsHtml() {
+                const firstSelect = container.querySelector("select[data-order-product]");
+                return firstSelect ? firstSelect.innerHTML : "";
+            }
+
+            function updateRemoveButtons() {
+                const rows = container.querySelectorAll(".order-line-row");
+                rows.forEach(function (row) {
+                    const removeButton = row.querySelector(".remove-order-line");
+                    if (!removeButton) {
+                        return;
+                    }
+
+                    removeButton.disabled = rows.length === 1;
+                    removeButton.classList.toggle("text-muted", rows.length === 1);
+                });
+            }
+
+            function reindexRows() {
+                const rows = container.querySelectorAll(".order-line-row");
+                rows.forEach(function (row, index) {
+                    row.dataset.orderLineIndex = index.toString();
+
+                    const productSelect = row.querySelector("select");
+                    if (productSelect) {
+                        productSelect.name = "OrderLines[" + index + "].ProductId";
+                        productSelect.id = "OrderLines_" + index + "__ProductId";
+                    }
+
+                    const quantityInput = row.querySelector("input[type='number']");
+                    if (quantityInput) {
+                        quantityInput.name = "OrderLines[" + index + "].Quantity";
+                        quantityInput.id = "OrderLines_" + index + "__Quantity";
+                    }
+                });
+
+                updateRemoveButtons();
+            }
+
+            function wireRemoveButton(button) {
+                button.addEventListener("click", function () {
+                    const rows = container.querySelectorAll(".order-line-row");
+                    if (rows.length === 1) {
+                        return;
+                    }
+
+                    const row = button.closest(".order-line-row");
+                    if (row) {
+                        row.remove();
+                        reindexRows();
+                    }
+                });
+            }
+
+            addButton.addEventListener("click", function () {
+                const nextIndex = container.querySelectorAll(".order-line-row").length;
+                const block = document.createElement("div");
+                block.className = "sfa-soft-block mb-2 order-line-row";
+                block.dataset.orderLineIndex = nextIndex.toString();
+                block.innerHTML =
+                    '<div class="mb-2">' +
+                        '<label class="form-label">Product</label>' +
+                        '<select class="form-select" data-order-product name="OrderLines[' + nextIndex + '].ProductId" id="OrderLines_' + nextIndex + '__ProductId">' + getProductOptionsHtml() + '</select>' +
+                    '</div>' +
+                    '<div class="mb-2">' +
+                        '<label class="form-label">Quantity</label>' +
+                        '<input class="form-control" type="number" step="0.01" min="0.01" value="1" name="OrderLines[' + nextIndex + '].Quantity" id="OrderLines_' + nextIndex + '__Quantity" />' +
+                    '</div>' +
+                    '<button class="btn btn-link text-danger p-0 remove-order-line" type="button">Remove SKU</button>';
+
+                container.appendChild(block);
+                const removeButton = block.querySelector(".remove-order-line");
+                if (removeButton) {
+                    wireRemoveButton(removeButton);
+                }
+
+                reindexRows();
+            });
+
+            const existingRemoveButtons = container.querySelectorAll(".remove-order-line");
+            existingRemoveButtons.forEach(function (button) {
+                wireRemoveButton(button);
+            });
+
+            reindexRows();
+        })();
+    </script>
+}
